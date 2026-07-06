@@ -5,8 +5,15 @@ import 'food_score_home_page.dart';
 import 'login_page_controller.dart';
 
 /// FoodScore 登录页。
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -14,6 +21,7 @@ class LoginPage extends StatelessWidget {
         context.screenWidth * LoginPageController.formWidthRatio;
 
     return Scaffold(
+      backgroundColor: LoginPageController.bgBottom,
       body: DecoratedBox(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -24,22 +32,38 @@ class LoginPage extends StatelessWidget {
               LoginPageController.bgMid,
               LoginPageController.bgBottom,
             ],
-            stops: [0.0, 0.55, 1.0],
+            stops: [0.0, 0.42, 1.0],
           ),
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: LoginPageController.horizontalPadding.w,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: LoginPageController.topInset.h),
-                _buildTitleSection(),
-                SizedBox(height: LoginPageController.titleToFormGap.h),
-                _buildFormBlock(context, formWidth),
-              ],
+        child: SizedBox.expand(
+          child: SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: LoginPageController.horizontalPadding.w,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: LoginPageController.topInset.h),
+                          _buildTitleSection(),
+                          SizedBox(
+                            height: LoginPageController.titleToFormGap.h,
+                          ),
+                          _buildFormBlock(context, formWidth),
+                          SizedBox(height: 24.h),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -61,7 +85,7 @@ class LoginPage extends StatelessWidget {
             letterSpacing: 0.2,
           ),
         ),
-        SizedBox(height: 4.h),
+        SizedBox(height: LoginPageController.greetingToBrandGap.h),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -88,6 +112,20 @@ class LoginPage extends StatelessWidget {
               ),
             ),
           ],
+        ),
+        SizedBox(height: LoginPageController.brandToTaglineGap.h),
+        Padding(
+          padding: EdgeInsets.only(right: 8.w),
+          child: Text(
+            LoginPageController.tagline,
+            style: TextStyle(
+              fontSize: LoginPageController.taglineFontSize.sp,
+              fontWeight: FontWeight.w400,
+              color: LoginPageController.taglineColor,
+              height: 1.5,
+              letterSpacing: 0.1,
+            ),
+          ),
         ),
       ],
     );
@@ -136,7 +174,21 @@ class LoginPage extends StatelessWidget {
             SizedBox(height: LoginPageController.inputGap.h),
             _buildInputField(
               hint: LoginPageController.passwordHint,
-              obscureText: true,
+              obscureText: _obscurePassword,
+              suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() => _obscurePassword = !_obscurePassword);
+                },
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(minWidth: 32.w, minHeight: 32.w),
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  size: 20.sp,
+                  color: LoginPageController.hintColor,
+                ),
+              ),
             ),
             SizedBox(height: LoginPageController.formToButtonGap.h),
             _buildLoginButton(context),
@@ -153,6 +205,7 @@ class LoginPage extends StatelessWidget {
   Widget _buildInputField({
     required String hint,
     bool obscureText = false,
+    Widget? suffixIcon,
   }) {
     final borderRadius = BorderRadius.circular(
       LoginPageController.inputBorderRadius.r,
@@ -176,7 +229,7 @@ class LoginPage extends StatelessWidget {
         ],
       ),
       alignment: Alignment.center,
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      padding: EdgeInsets.only(left: 16.w, right: suffixIcon == null ? 16.w : 4.w),
       child: TextField(
         obscureText: obscureText,
         textAlignVertical: TextAlignVertical.center,
@@ -199,6 +252,7 @@ class LoginPage extends StatelessWidget {
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
           contentPadding: EdgeInsets.zero,
+          suffixIcon: suffixIcon,
         ),
       ),
     );

@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'meal_analysis_loading_page.dart';
+import '../config/page_layout.dart';
+import '../widgets/meal_feedback_mode_selector.dart';
+import '../widgets/page_back_button.dart';
 import 'upload_meal_photo_controller.dart';
 /// 上传餐食照片页面。
 class UploadMealPhotoPage extends StatefulWidget {
@@ -17,6 +20,7 @@ class UploadMealPhotoPage extends StatefulWidget {
 
 class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
   final TextEditingController _descriptionController = TextEditingController();
+  final ScrollController _descriptionScrollController = ScrollController();
   final ImagePicker _imagePicker = ImagePicker();
   XFile? _selectedImage;
 
@@ -25,6 +29,7 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
   @override
   void dispose() {
     _descriptionController.dispose();
+    _descriptionScrollController.dispose();
     super.dispose();
   }
 
@@ -42,16 +47,11 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final content = _buildContent(
-              context,
-              fillHeight: constraints.maxHeight >= 700,
-            );
-            if (constraints.maxHeight < 700) {
-              return SingleChildScrollView(child: content);
-            }
-            return SizedBox(
-              height: constraints.maxHeight,
-              child: content,
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: _buildContent(context),
+              ),
             );
           },
         ),
@@ -59,29 +59,7 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
     );
   }
 
-  Widget _buildContent(BuildContext context, {required bool fillHeight}) {
-    final bottomSection = fillHeight
-        ? Expanded(
-            child: Column(
-              children: [
-                SizedBox(height: UploadMealPhotoController.descriptionToCtaGap.h),
-                _buildCtaButton(context),
-                Expanded(
-                  child: Center(child: _buildDisclaimer()),
-                ),
-              ],
-            ),
-          )
-        : Column(
-            children: [
-              SizedBox(height: UploadMealPhotoController.descriptionToCtaGap.h),
-              _buildCtaButton(context),
-              SizedBox(height: UploadMealPhotoController.ctaToDisclaimerGap.h),
-              _buildDisclaimer(),
-              SizedBox(height: 16.h),
-            ],
-          );
-
+  Widget _buildContent(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: UploadMealPhotoController.horizontalPadding.w,
@@ -89,11 +67,11 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: UploadMealPhotoController.topExtraPadding.h),
-          _buildBackButton(context),
-          SizedBox(height: UploadMealPhotoController.backToTitleGap.h),
+          SizedBox(height: PageLayout.topExtraPadding.h),
+          const PageBackButton(),
+          SizedBox(height: PageLayout.backToTitleGap.h),
           _buildTitleSection(),
-          SizedBox(height: 20.h),
+          SizedBox(height: UploadMealPhotoController.subtitleToUploadGap.h),
           _buildUploadArea(),
           SizedBox(height: 24.h),
           Text(
@@ -119,27 +97,12 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
           ),
           SizedBox(height: UploadMealPhotoController.optionalToInputGap.h),
           _buildDescriptionField(),
-          bottomSection,
+          SizedBox(height: UploadMealPhotoController.descriptionToCtaGap.h),
+          _buildCtaButton(context),
+          SizedBox(height: UploadMealPhotoController.ctaToDisclaimerGap.h),
+          _buildDisclaimer(),
+          SizedBox(height: UploadMealPhotoController.disclaimerBottomPadding.h),
         ],
-      ),
-    );
-  }
-
-  Widget _buildBackButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.of(context).maybePop(),
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 4.h),
-        child: Text(
-          UploadMealPhotoController.backLabel,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w800,
-            color: UploadMealPhotoController.backColor,
-            letterSpacing: 0.2,
-          ),
-        ),
       ),
     );
   }
@@ -271,14 +234,22 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
       ),
     );
 
-    return SizedBox(
-      width: double.infinity,
-      height: UploadMealPhotoController.descriptionInputHeight.h,
-      child: TextField(
-        controller: _descriptionController,
-        maxLines: null,
-        expands: true,
-        textAlignVertical: TextAlignVertical.top,
+    return NotificationListener<OverscrollIndicatorNotification>(
+      onNotification: (notification) {
+        notification.disallowIndicator();
+        return false;
+      },
+      child: SizedBox(
+        width: double.infinity,
+        height: UploadMealPhotoController.descriptionInputHeight.h,
+        child: TextField(
+          controller: _descriptionController,
+          scrollController: _descriptionScrollController,
+          keyboardType: TextInputType.multiline,
+          textInputAction: TextInputAction.newline,
+          maxLines: null,
+          expands: true,
+          textAlignVertical: TextAlignVertical.top,
         style: TextStyle(
           fontSize: UploadMealPhotoController.descriptionInputFontSize.sp,
           fontWeight: FontWeight.w400,
@@ -321,6 +292,7 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
             ),
           ),
         ),
+        ),
       ),
     );
   }
@@ -334,59 +306,73 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
         ? Colors.white
         : UploadMealPhotoController.ctaDisabledText;
     final borderRadius = BorderRadius.circular(
-      UploadMealPhotoController.ctaRadius.r,
+      PageLayout.primaryButtonRadius.r,
     );
 
-    return Center(
-      child: Material(
-        color: bgColor,
-        elevation: enabled ? 2.5 : 0,
-        shadowColor: enabled
-            ? UploadMealPhotoController.ctaEnabledBg.withValues(alpha: 0.28)
-            : Colors.transparent,
-        borderRadius: borderRadius,
-        clipBehavior: Clip.none,
-        child: InkWell(
-          onTap: enabled
-              ? () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => MealAnalysisLoadingPage(
-                        imagePath: _selectedImage!.path,
-                        description: _descriptionController.text.trim().isEmpty
-                            ? null
-                            : _descriptionController.text.trim(),
+    return Material(
+      color: bgColor,
+      elevation: enabled ? 2.5 : 0,
+      shadowColor: enabled
+          ? UploadMealPhotoController.ctaEnabledBg.withValues(alpha: 0.28)
+          : Colors.transparent,
+      borderRadius: borderRadius,
+      clipBehavior: Clip.none,
+      child: InkWell(
+        onTap: enabled
+            ? () {
+                showMealFeedbackModeSheet(
+                  context,
+                  onInstantFeedback: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => MealAnalysisLoadingPage(
+                          imagePath: _selectedImage!.path,
+                          description:
+                              _descriptionController.text.trim().isEmpty
+                              ? null
+                              : _descriptionController.text.trim(),
+                        ),
                       ),
-                    ),
-                  );
-                }
-              : null,
-          borderRadius: borderRadius,
-          splashColor: enabled ? Colors.white.withValues(alpha: 0.18) : null,
-          highlightColor: enabled ? Colors.white.withValues(alpha: 0.08) : null,
-          child: SizedBox(
-            width: UploadMealPhotoController.ctaMaxWidth.w,
-            height: UploadMealPhotoController.ctaHeight.h,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  UploadMealPhotoController.ctaLabel,
-                  style: TextStyle(
-                    fontSize: UploadMealPhotoController.ctaFontSize.sp,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                    letterSpacing: 0.15,
-                  ),
-                ),
-                SizedBox(width: UploadMealPhotoController.ctaIconGap.w),
-                Icon(
-                  Icons.arrow_forward_rounded,
-                  size: UploadMealPhotoController.ctaIconSize.sp,
+                    );
+                  },
+                  onWeeklyReflection: () {
+                    final description = _descriptionController.text.trim();
+                    saveMealForWeeklyReflection(
+                      context,
+                      summary: description.isEmpty
+                          ? 'Meal photo'
+                          : description,
+                      isPhoto: true,
+                    );
+                  },
+                );
+              }
+            : null,
+        borderRadius: borderRadius,
+        splashColor: enabled ? Colors.white.withValues(alpha: 0.18) : null,
+        highlightColor: enabled ? Colors.white.withValues(alpha: 0.08) : null,
+        child: SizedBox(
+          width: double.infinity,
+          height: UploadMealPhotoController.ctaHeight.h,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                UploadMealPhotoController.ctaLabel,
+                style: TextStyle(
+                  fontSize: UploadMealPhotoController.ctaFontSize.sp,
+                  fontWeight: FontWeight.w600,
                   color: textColor,
+                  letterSpacing: 0.15,
                 ),
-              ],
-            ),
+              ),
+              SizedBox(width: UploadMealPhotoController.ctaIconGap.w),
+              Icon(
+                Icons.arrow_forward_rounded,
+                size: UploadMealPhotoController.ctaIconSize.sp,
+                color: textColor,
+              ),
+            ],
           ),
         ),
       ),
@@ -394,15 +380,17 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
   }
 
   Widget _buildDisclaimer() {
-    return Text(
-      '${UploadMealPhotoController.disclaimerLine1}\n'
-      '${UploadMealPhotoController.disclaimerLine2}',
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 12.sp,
-        fontWeight: FontWeight.w400,
-        color: UploadMealPhotoController.disclaimerColor,
-        height: 1.4,
+    return Center(
+      child: Text(
+        '${UploadMealPhotoController.disclaimerLine1}\n'
+        '${UploadMealPhotoController.disclaimerLine2}',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w400,
+          color: UploadMealPhotoController.disclaimerColor,
+          height: 1.4,
+        ),
       ),
     );
   }

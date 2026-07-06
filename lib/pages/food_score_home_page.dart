@@ -2,7 +2,10 @@ import 'package:ducafe_ui_core/ducafe_ui_core.dart';
 import 'package:flutter/material.dart';
 
 import 'food_score_home_controller.dart';
+import '../config/page_layout.dart';
 import 'share_meal_page.dart';
+import '../widgets/user_menu_drawer.dart';
+import 'weekly_reflection_page.dart';
 
 /// FoodScore 首页 / Onboarding。
 class FoodScoreHomePage extends StatelessWidget {
@@ -12,124 +15,172 @@ class FoodScoreHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: FoodScoreHomeController.backgroundColor,
+      endDrawer: const UserMenuDrawer(),
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: FoodScoreHomeController.horizontalPadding.w,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: FoodScoreHomeController.topExtraPadding.h),
-              _buildHeroSection(),
-              SizedBox(height: 18.h),
-              _buildDescription(),
-              SizedBox(height: 18.h),
-              _buildFeatureList(),
-              SizedBox(height: 30.h),
-              _buildCtaButton(context),
-              SizedBox(height: FoodScoreHomeController.ctaToDisclaimerGap.h),
-              _buildDisclaimer(),
-              SizedBox(height: 8.h),
-            ],
-          ),
+        child: Builder(
+          builder: (scaffoldContext) {
+            return SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: FoodScoreHomeController.horizontalPadding.w,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTopBar(scaffoldContext),
+                    SizedBox(
+                      height: (FoodScoreHomeController.topExtraPadding +
+                              FoodScoreHomeController.heroContentTopGap)
+                          .h,
+                    ),
+                    _buildWelcomeCard(),
+                    SizedBox(
+                      height: FoodScoreHomeController.welcomeToFeaturesGap.h,
+                    ),
+                    _buildFeatureList(),
+                    SizedBox(
+                      height: FoodScoreHomeController.featuresToCtaGap.h,
+                    ),
+                    _buildCtaButton(scaffoldContext),
+                    SizedBox(
+                      height: FoodScoreHomeController.ctaToReflectionGap.h,
+                    ),
+                    _buildReflectionEntry(scaffoldContext),
+                    SizedBox(
+                      height:
+                          FoodScoreHomeController.reflectionToDisclaimerGap.h,
+                    ),
+                    _buildDisclaimer(),
+                    SizedBox(
+                      height: FoodScoreHomeController.disclaimerBottomPadding.h,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildHeroSection() {
-    return SizedBox(
-      height: FoodScoreHomeController.heroHeight.h,
-      child: Stack(
-        clipBehavior: Clip.none,
+  Widget _buildTopBar(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(top: FoodScoreHomeController.brandTopInset.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: double.infinity,
-            height: FoodScoreHomeController.heroHeight.h,
-            padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 14.h),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  FoodScoreHomeController.heroGradientStart,
-                  FoodScoreHomeController.heroGradientEnd,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(
-                FoodScoreHomeController.heroRadius.r,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF1A6731).withValues(alpha: 0.07),
-                  blurRadius: 14.r,
-                  offset: Offset(0, 4.h),
-                ),
-              ],
+          Text(
+            FoodScoreHomeController.brandName,
+            style: TextStyle(
+              fontSize: FoodScoreHomeController.brandFontSize.sp,
+              fontWeight: FontWeight.w700,
+              color: FoodScoreHomeController.brandColor,
+              letterSpacing: 0.3,
+              height: 1.2,
             ),
+          ),
+          const Spacer(),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => Scaffold.of(context).openEndDrawer(),
+              customBorder: const CircleBorder(),
+              child: Container(
+                width: 36.w,
+                height: 36.w,
+                decoration: const BoxDecoration(
+                  color: FoodScoreHomeController.userAvatarBg,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.person_outline_rounded,
+                  size: 20.sp,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWelcomeCard() {
+    return Container(
+      width: double.infinity,
+      height: FoodScoreHomeController.welcomeCardHeight.h,
+      padding: EdgeInsets.fromLTRB(16.w, 18.h, 10.w, 18.h),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            FoodScoreHomeController.welcomeGradientStart,
+            FoodScoreHomeController.welcomeGradientEnd,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(
+          FoodScoreHomeController.welcomeCardRadius.r,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1A6731).withValues(alpha: 0.06),
+            blurRadius: 10.r,
+            offset: Offset(0, 3.h),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  FoodScoreHomeController.brandName,
+                  FoodScoreHomeController.welcomeTitleLine1,
                   style: TextStyle(
-                    fontSize: 11.sp,
+                    fontSize: FoodScoreHomeController.welcomeTitleFontSize.sp,
                     fontWeight: FontWeight.w600,
-                    color: FoodScoreHomeController.brandColor,
-                    letterSpacing: 1.4,
+                    color: FoodScoreHomeController.welcomeTitleColor,
+                    height: 1.2,
                   ),
                 ),
-                SizedBox(height: 18.h),
-                _buildHeadlineLine(FoodScoreHomeController.headlineLine1),
-                _buildHeadlineLine(FoodScoreHomeController.headlineLine2),
-                _buildHeadlineLine(FoodScoreHomeController.headlineLine3),
+                Padding(
+                  padding: EdgeInsets.only(left: 18.w, top: 4.h),
+                  child: Text(
+                    FoodScoreHomeController.welcomeTitleLine2,
+                    style: TextStyle(
+                      fontSize: FoodScoreHomeController
+                          .welcomeTitleLine2FontSize.sp,
+                      fontWeight: FontWeight.w600,
+                      color: FoodScoreHomeController.welcomeTitleColor,
+                      height: 1.15,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  FoodScoreHomeController.welcomeSubtitle,
+                  style: TextStyle(
+                    fontSize:
+                        FoodScoreHomeController.welcomeSubtitleFontSize.sp,
+                    fontWeight: FontWeight.w400,
+                    color: FoodScoreHomeController.welcomeSubtitleColor,
+                    height: 1.35,
+                  ),
+                ),
               ],
             ),
           ),
-          Positioned(
-            right: -4.w,
-            bottom: -22.h,
-            child: Image.asset(
-              FoodScoreHomeController.mealImageAsset,
-              width: FoodScoreHomeController.mealImageWidth.w,
-              fit: BoxFit.contain,
-            ),
+          Image.asset(
+            FoodScoreHomeController.mealImageAsset,
+            width: FoodScoreHomeController.welcomeMealImageWidth.w,
+            fit: BoxFit.contain,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildHeadlineLine(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: FoodScoreHomeController.headlineFontSize.sp,
-        fontWeight: FontWeight.w600,
-        color: FoodScoreHomeController.headlineColor,
-        height: 1.24,
-        letterSpacing: -0.2,
-        shadows: [
-          Shadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            offset: Offset(0, 1.5.h),
-            blurRadius: 3.r,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDescription() {
-    return Text(
-      FoodScoreHomeController.description,
-      style: TextStyle(
-        fontSize: 14.sp,
-        fontWeight: FontWeight.w400,
-        color: FoodScoreHomeController.descriptionColor,
-        height: 1.5,
-        letterSpacing: 0.1,
       ),
     );
   }
@@ -138,7 +189,8 @@ class FoodScoreHomePage extends StatelessWidget {
     return Column(
       children: [
         for (var i = 0; i < FoodScoreHomeController.features.length; i++) ...[
-          if (i > 0) SizedBox(height: 10.h),
+          if (i > 0)
+            SizedBox(height: FoodScoreHomeController.featureRowGap.h),
           _buildFeatureRow(FoodScoreHomeController.features[i]),
         ],
       ],
@@ -149,27 +201,27 @@ class FoodScoreHomePage extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 34.w,
-          height: 34.w,
+          width: FoodScoreHomeController.featureIconBoxSize.w,
+          height: FoodScoreHomeController.featureIconBoxSize.w,
           decoration: BoxDecoration(
             color: FoodScoreHomeController.featureIconBg,
-            borderRadius: BorderRadius.circular(10.r),
+            borderRadius: BorderRadius.circular(8.r),
           ),
           child: Icon(
             item.icon,
-            size: 18.sp,
+            size: FoodScoreHomeController.featureIconSize.sp,
             color: FoodScoreHomeController.featureIconColor,
           ),
         ),
-        SizedBox(width: 12.w),
+        SizedBox(width: 10.w),
         Expanded(
           child: Text(
             item.label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w600,
+              fontSize: FoodScoreHomeController.featureFontSize.sp,
+              fontWeight: FontWeight.w500,
               color: FoodScoreHomeController.featureTextColor,
               height: 1.2,
             ),
@@ -180,49 +232,124 @@ class FoodScoreHomePage extends StatelessWidget {
   }
 
   Widget _buildCtaButton(BuildContext context) {
-    final borderRadius = BorderRadius.circular(24.r);
+    final borderRadius = BorderRadius.circular(
+      PageLayout.primaryButtonRadius.r,
+    );
 
-    return Center(
-      child: Material(
-        color: FoodScoreHomeController.ctaColor,
-        elevation: 2.5,
-        shadowColor: FoodScoreHomeController.ctaColor.withValues(alpha: 0.28),
-        borderRadius: borderRadius,
-        clipBehavior: Clip.none,
-        child: InkWell(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const ShareMealPage(),
-              ),
-            );
-          },
-          borderRadius: borderRadius,
-          splashColor: Colors.white.withValues(alpha: 0.18),
-          highlightColor: Colors.white.withValues(alpha: 0.08),
-          child: SizedBox(
-            width: FoodScoreHomeController.ctaMaxWidth.w,
-            height: FoodScoreHomeController.ctaHeight.h,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  FoodScoreHomeController.ctaLabel,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    letterSpacing: 0.15,
-                  ),
-                ),
-                SizedBox(width: 6.w),
-                Icon(
-                  Icons.arrow_forward_rounded,
-                  size: 18.sp,
-                  color: Colors.white,
-                ),
-              ],
+    return Material(
+      color: FoodScoreHomeController.ctaColor,
+      elevation: 2.5,
+      shadowColor: FoodScoreHomeController.ctaColor.withValues(alpha: 0.28),
+      borderRadius: borderRadius,
+      clipBehavior: Clip.none,
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const ShareMealPage(),
             ),
+          );
+        },
+        borderRadius: borderRadius,
+        splashColor: Colors.white.withValues(alpha: 0.18),
+        highlightColor: Colors.white.withValues(alpha: 0.08),
+        child: SizedBox(
+          width: double.infinity,
+          height: FoodScoreHomeController.ctaHeight.h,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                FoodScoreHomeController.ctaLabel,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                  letterSpacing: 0.15,
+                ),
+              ),
+              SizedBox(width: 6.w),
+              Icon(
+                Icons.arrow_forward_rounded,
+                size: 18.sp,
+                color: Colors.white,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReflectionEntry(BuildContext context) {
+    final borderRadius = BorderRadius.circular(
+      FoodScoreHomeController.reflectionCardRadius.r,
+    );
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const WeeklyReflectionPage(),
+            ),
+          );
+        },
+        borderRadius: borderRadius,
+        splashColor: FoodScoreHomeController.ctaColor.withValues(alpha: 0.05),
+        highlightColor: FoodScoreHomeController.ctaColor.withValues(
+          alpha: 0.02,
+        ),
+        child: Container(
+          width: double.infinity,
+          height: FoodScoreHomeController.reflectionCardHeight.h,
+          padding: EdgeInsets.fromLTRB(14.w, 10.h, 12.w, 10.h),
+          decoration: BoxDecoration(
+            color: FoodScoreHomeController.backgroundColor,
+            borderRadius: borderRadius,
+            border: Border.all(
+              color: FoodScoreHomeController.reflectionBorderColor,
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      FoodScoreHomeController.reflectionTitle,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: FoodScoreHomeController.reflectionTitleColor,
+                        height: 1.15,
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      FoodScoreHomeController.reflectionSubtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w400,
+                        color: FoodScoreHomeController.reflectionSubtitleColor,
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_rounded,
+                size: 16.sp,
+                color: FoodScoreHomeController.reflectionArrowColor,
+              ),
+            ],
           ),
         ),
       ),

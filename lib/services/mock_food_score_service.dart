@@ -3,20 +3,15 @@ import '../data/food_score_mock_data.dart';
 import '../models/food_score_result.dart';
 import 'food_score_service.dart';
 
-/// Mock 餐食分析服务：返回固定示例数据，不调用真实 API。
-///
-/// TODO: Replace mock flow with FastAPI backend integration after front-end pages are finalised.
 class MockFoodScoreService implements FoodScoreService {
   MockFoodScoreService({
     this.simulatedDelay = const Duration(seconds: 3),
     MockResultScenario? scenario,
   }) : _scenario = scenario ?? AppConfig.mockResultScenario;
 
-  /// 模拟网络/分析耗时，与 Loading 页动画节奏一致。
   final Duration simulatedDelay;
   final MockResultScenario _scenario;
 
-  /// 当前配置场景对应的 mock 结果。
   FoodScoreResult get activeResult =>
       FoodScoreMockData.resolve(_scenario);
 
@@ -46,28 +41,30 @@ class MockFoodScoreService implements FoodScoreService {
           ? '${trimmed.substring(0, 48)}…'
           : trimmed;
       return FoodScoreResult(
+        mealName: snippet,
         overallScore: base.overallScore,
         overallLabel: base.overallLabel,
-        mealName: snippet,
         summary: base.summary,
         dimensions: base.dimensions,
         strengths: base.strengths,
         concerns: base.concerns,
         tips: base.tips,
-        tipsHeadline: base.tipsHeadline,
+        positiveNotes: base.positiveNotes,
+        disclaimer: base.disclaimer,
       );
     }
     if (imagePath != null && imagePath.isNotEmpty) {
       return FoodScoreResult(
+        mealName: 'Uploaded meal photo',
         overallScore: base.overallScore,
         overallLabel: base.overallLabel,
-        mealName: 'Uploaded meal photo',
         summary: base.summary,
         dimensions: base.dimensions,
         strengths: base.strengths,
         concerns: base.concerns,
         tips: base.tips,
-        tipsHeadline: base.tipsHeadline,
+        positiveNotes: base.positiveNotes,
+        disclaimer: base.disclaimer,
       );
     }
     return base;

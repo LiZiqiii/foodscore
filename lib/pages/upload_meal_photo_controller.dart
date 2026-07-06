@@ -12,7 +12,7 @@ class UploadMealPhotoController {
   static const String descriptionOptional = '(optional — improves accuracy)';
   static const String descriptionHint =
       'e.g. Grilled salmon with roasted broccoli and brown rice, with a lemon dressing.';
-  static const String ctaLabel = 'Analyse a meal';
+  static const String ctaLabel = 'Continue';
   static const String disclaimerLine1 = 'Approximate meal-level feedback.';
   static const String disclaimerLine2 =
       'Not medical advice or precise nutrient calculation.';
@@ -29,8 +29,8 @@ class UploadMealPhotoController {
   static const Color uploadHintColor = Color(0xF22E5E35);
   static const Color descriptionLabelColor = Color(0xFF4A4B48);
   static const Color descriptionOptionalColor = Color(0x73000000);
-  static const Color descriptionInputBg = Color(0xB3F5F5F5);
-  static const Color descriptionInputBorder = Color(0xFFE6E6E6);
+  static const Color descriptionInputBg = Color(0xFFFAFCFA);
+  static const Color descriptionInputBorder = Color(0x0D082310);
   static const Color descriptionHintColor = Color(0xFF959694);
   static const Color descriptionTextColor = Color(0xFF4A4B48);
   static const Color ctaDisabledBg = Color(0xFFF5F5F5);
@@ -40,9 +40,10 @@ class UploadMealPhotoController {
 
   // 尺寸
   static const double horizontalPadding = 24;
-  static const double topExtraPadding = 48;
-  static const double backToTitleGap = 20;
-  static const double titleToSubtitleGap = 8;
+  static const double topExtraPadding = 10;
+  static const double backToTitleGap = 18;
+  static const double titleToSubtitleGap = 14;
+  static const double subtitleToUploadGap = 28;
   static const double subtitleFontSize = 14;
   static const double uploadIconSize = 32;
   static const double uploadIconToHintGap = 15;
@@ -59,14 +60,13 @@ class UploadMealPhotoController {
   static const double descriptionInputRadiusTR = 19;
   static const double descriptionInputRadiusBL = 18;
   static const double descriptionInputRadiusBR = 25;
-  static const double descriptionToCtaGap = 44;
-  static const double ctaToDisclaimerGap = 22;
-  static const double disclaimerBottomPadding = 8;
+  static const double descriptionToCtaGap = 32;
+  static const double ctaToDisclaimerGap = 44;
+  static const double disclaimerBottomPadding = 24;
 
   // CTA — 与 home page 一致
   static const double ctaHeight = 48;
-  static const double ctaMaxWidth = 280;
-  static const double ctaRadius = 24;
+  static const double ctaRadius = 15;
   static const double ctaFontSize = 16;
   static const double ctaIconSize = 18;
   static const double ctaIconGap = 6;

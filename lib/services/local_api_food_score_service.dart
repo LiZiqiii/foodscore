@@ -1,31 +1,61 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
 import '../config/app_config.dart';
 import '../models/food_score_result.dart';
 import 'food_score_service.dart';
 
-/// 通过本地 FastAPI 代理调用 GPT 的餐食分析服务。
-///
-/// GPT prompt 与 JSON schema 对齐说明见 `lib/prompts/food_score_prompt.dart`。
-///
-/// TODO: Replace mock flow with FastAPI backend integration after front-end pages are finalised.
-class LocalApiFoodScoreService implements FoodScoreService {  LocalApiFoodScoreService({String? baseUrl})
-      : baseUrl = baseUrl ?? AppConfig.localApiBaseUrl;
+/// 通过本地 FastAPI 代理调用 GPT（Flutter 不持有 API key）。
+class LocalApiFoodScoreService implements FoodScoreService {
+  LocalApiFoodScoreService({String? baseUrl, http.Client? client})
+      : baseUrl = baseUrl ?? AppConfig.localApiBaseUrl,
+        _client = client ?? http.Client();
 
   final String baseUrl;
+  final http.Client _client;
+
+  static const Duration _timeout = Duration(seconds: 90);
 
   @override
   Future<FoodScoreResult> analyseMealFromText(String mealText) async {
-    // TODO: POST $baseUrl/analyse-text
-    // Request body: {'meal_text': mealText}
-    // Response: JSON matching FoodScoreResult fields — add fromJson when backend schema is final.
-    // Example:
-    // final uri = Uri.parse('$baseUrl/analyse-text');
-    // final response = await http.post(uri, body: jsonEncode({'meal_text': mealText}), ...);
-    // if (response.statusCode != 200) throw FoodScoreServiceException(...);
-    // return FoodScoreResult.fromJson(jsonDecode(response.body));
-    throw FoodScoreServiceException(
-      'Local API text analysis is not implemented yet. '
-      'Set AppConfig.useMockResult = true or complete this service.',
-    );
+    final trimmed = mealText.trim();
+    if (trimmed.isEmpty) {
+      throw FoodScoreServiceException('Meal description is empty.');
+    }
+
+    final uri = Uri.parse('$baseUrl/analyse-text');
+    try {
+      final response = await _client
+          .post(
+            uri,
+            headers: const {'Content-Type': 'application/json'},
+            body: jsonEncode({'mealText': trimmed}),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode != 200) {
+        throw FoodScoreServiceException(_errorMessageFromBody(response));
+      }
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        throw FoodScoreServiceException('Invalid response from analysis server.');
+      }
+
+      return FoodScoreResult.fromJson(decoded);
+    } on FoodScoreServiceException {
+      rethrow;
+    } on FormatException catch (error) {
+      throw FoodScoreServiceException(
+        'Could not parse analysis response: ${error.message}',
+      );
+    } catch (error) {
+      throw FoodScoreServiceException(
+        'Could not reach analysis server at $baseUrl. '
+        'Is the FastAPI backend running? ($error)',
+      );
+    }
   }
 
   @override
@@ -33,11 +63,23 @@ class LocalApiFoodScoreService implements FoodScoreService {  LocalApiFoodScoreS
     required String imagePath,
     String? description,
   }) async {
-    // TODO: POST $baseUrl/analyse-image (multipart: image file + optional description)
-    // Response: JSON matching FoodScoreResult fields.
     throw FoodScoreServiceException(
-      'Local API image analysis is not implemented yet. '
-      'Set AppConfig.useMockResult = true or complete this service.',
+      'Image analysis is not supported yet. Use text input or mock result.',
     );
+  }
+
+  String _errorMessageFromBody(http.Response response) {
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        final detail = decoded['detail'];
+        if (detail is String && detail.isNotEmpty) {
+          return detail;
+        }
+      }
+    } catch (_) {
+      // Fall through to generic message.
+    }
+    return 'Analysis server error (${response.statusCode}).';
   }
 }

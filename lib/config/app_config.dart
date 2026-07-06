@@ -1,8 +1,6 @@
 import '../data/food_score_mock_data.dart';
 
 /// 应用级配置：Mock 与本地 FastAPI 后端切换。
-///
-/// TODO: Replace mock flow with FastAPI backend integration after front-end pages are finalised.
 class AppConfig {
   AppConfig._();
 

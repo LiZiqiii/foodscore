@@ -2,6 +2,9 @@ import 'package:ducafe_ui_core/ducafe_ui_core.dart';
 import 'package:flutter/material.dart';
 
 import 'describe_meal_page_controller.dart';
+import '../config/page_layout.dart';
+import '../widgets/meal_feedback_mode_selector.dart';
+import '../widgets/page_back_button.dart';
 import 'meal_analysis_loading_page.dart';
 
 /// 文字描述餐食页面。
@@ -14,6 +17,7 @@ class DescribeMealPage extends StatefulWidget {
 
 class _DescribeMealPageState extends State<DescribeMealPage> {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _inputScrollController = ScrollController();
 
   @override
   void initState() {
@@ -24,6 +28,7 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
   @override
   void dispose() {
     _controller.dispose();
+    _inputScrollController.dispose();
     super.dispose();
   }
 
@@ -34,68 +39,45 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
     return Scaffold(
       backgroundColor: DescribeMealPageController.backgroundColor,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final content = _buildContent(
-              context,
-              fillHeight: constraints.maxHeight >= 700,
-            );
-            if (constraints.maxHeight < 700) {
-              return SingleChildScrollView(child: content);
-            }
-            return SizedBox(
-              height: constraints.maxHeight,
-              child: content,
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContent(BuildContext context, {required bool fillHeight}) {
-    final bottomSpacer = fillHeight
-        ? const Spacer()
-        : SizedBox(height: DescribeMealPageController.disclaimerBottomPadding.h);
-
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: DescribeMealPageController.horizontalPadding.w,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: DescribeMealPageController.topExtraPadding.h),
-          _buildBackButton(context),
-          SizedBox(height: DescribeMealPageController.backToTitleGap.h),
-          _buildTitleSection(),
-          SizedBox(height: DescribeMealPageController.subtitleToInputGap.h),
-          _buildInputField(),
-          SizedBox(height: DescribeMealPageController.inputToTipsGap.h),
-          _buildTipsSection(),
-          SizedBox(height: DescribeMealPageController.tipsToCtaGap.h),
-          _buildCtaButton(context),
-          SizedBox(height: DescribeMealPageController.ctaToDisclaimerGap.h),
-          _buildDisclaimer(),
-          bottomSpacer,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBackButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.of(context).maybePop(),
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 4.h),
-        child: Text(
-          DescribeMealPageController.backLabel,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w800,
-            color: DescribeMealPageController.backColor,
-            letterSpacing: 0.2,
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: DescribeMealPageController.horizontalPadding.w,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: PageLayout.topExtraPadding.h),
+              const PageBackButton(),
+              SizedBox(height: PageLayout.backToTitleGap.h),
+              _buildTitleSection(),
+              SizedBox(height: DescribeMealPageController.subtitleToInputGap.h),
+              _buildInputField(),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: DescribeMealPageController.inputToTipsGap.h,
+                      ),
+                      _buildTipsSection(),
+                      SizedBox(
+                        height: DescribeMealPageController.tipsToCtaGap.h,
+                      ),
+                      _buildCtaButton(context),
+                      SizedBox(
+                        height: DescribeMealPageController.ctaToDisclaimerGap.h,
+                      ),
+                      _buildDisclaimer(),
+                      SizedBox(
+                        height:
+                            DescribeMealPageController.disclaimerBottomPadding.h,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -145,6 +127,9 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
       height: DescribeMealPageController.inputHeight.h,
       child: TextField(
         controller: _controller,
+        scrollController: _inputScrollController,
+        keyboardType: TextInputType.multiline,
+        textInputAction: TextInputAction.newline,
         maxLines: null,
         expands: true,
         textAlignVertical: TextAlignVertical.top,
@@ -199,16 +184,65 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
   Widget _buildTipsSection() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return Wrap(
-          spacing: 10.w,
-          runSpacing: DescribeMealPageController.tipRowGap.h,
+        final gap = 10.w;
+        final chipWidth = (constraints.maxWidth - gap) / 2;
+        final tips = DescribeMealPageController.tips;
+
+        return Column(
           children: [
-            for (var i = 0; i < DescribeMealPageController.tips.length; i++)
-              _buildTipChip(
-                DescribeMealPageController.tips[i],
-                maxWidth: constraints.maxWidth,
-                isLast: i == DescribeMealPageController.tips.length - 1,
-              ),
+            Row(
+              children: [
+                SizedBox(
+                  width: chipWidth,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: _buildTipChip(
+                      tips[0],
+                      compact: true,
+                      extraRight: 10,
+                    ),
+                  ),
+                ),
+                SizedBox(width: gap),
+                SizedBox(
+                  width: chipWidth,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: _buildTipChip(
+                      tips[1],
+                      compact: true,
+                      extraRight: 10,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: DescribeMealPageController.tipRowGap.h),
+            Row(
+              children: [
+                SizedBox(
+                  width: chipWidth,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _buildTipChip(
+                      tips[2],
+                      leadingInset: 8,
+                    ),
+                  ),
+                ),
+                SizedBox(width: gap),
+                SizedBox(
+                  width: chipWidth,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _buildTipChip(
+                      tips[3],
+                      leadingInset: 16,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         );
       },
@@ -217,60 +251,70 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
 
   Widget _buildTipChip(
     String label, {
-    required double maxWidth,
-    bool isLast = false,
+    bool compact = false,
+    double extraRight = 0,
+    double leadingInset = 0,
   }) {
-    final textStyle = TextStyle(
-      fontSize: DescribeMealPageController.tipFontSize.sp,
-      fontWeight: FontWeight.w400,
-      color: DescribeMealPageController.tipTextColor,
-      height: 1.1,
+    final chip = Container(
+      height: DescribeMealPageController.tipChipHeight.h,
+      padding: EdgeInsets.fromLTRB(
+        DescribeMealPageController.tipChipPaddingH.w,
+        0,
+        (DescribeMealPageController.tipChipPaddingH + extraRight).w,
+        0,
+      ),
+      decoration: BoxDecoration(
+        color: DescribeMealPageController.tipBg,
+        borderRadius: BorderRadius.circular(50.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '💡',
+            style: TextStyle(
+              fontSize: DescribeMealPageController.tipIconSize.sp,
+              height: 1,
+            ),
+          ),
+          SizedBox(width: DescribeMealPageController.tipIconGap.w),
+          if (compact)
+            Text(
+              label,
+              maxLines: 1,
+              style: TextStyle(
+                fontSize: DescribeMealPageController.tipFontSize.sp,
+                fontWeight: FontWeight.w400,
+                color: DescribeMealPageController.tipTextColor,
+                height: 1.1,
+              ),
+            )
+          else
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: DescribeMealPageController.tipFontSize.sp,
+                  fontWeight: FontWeight.w400,
+                  color: DescribeMealPageController.tipTextColor,
+                  height: 1.1,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
 
-    Widget labelText = Text(
-      label,
-      maxLines: 1,
-      softWrap: false,
-      overflow: isLast ? TextOverflow.visible : TextOverflow.ellipsis,
-      style: textStyle,
-    );
-
-    if (isLast) {
-      labelText = FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.centerLeft,
-        child: labelText,
+    if (leadingInset > 0) {
+      return Padding(
+        padding: EdgeInsets.only(left: leadingInset.w),
+        child: chip,
       );
     }
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth),
-      child: Container(
-        width: isLast ? maxWidth : null,
-        height: DescribeMealPageController.tipChipHeight.h,
-        padding: EdgeInsets.symmetric(
-          horizontal: DescribeMealPageController.tipChipPaddingH.w,
-        ),
-        decoration: BoxDecoration(
-          color: DescribeMealPageController.tipBg,
-          borderRadius: BorderRadius.circular(50.r),
-        ),
-        child: Row(
-          mainAxisSize: isLast ? MainAxisSize.max : MainAxisSize.min,
-          children: [
-            Text(
-              '💡',
-              style: TextStyle(
-                fontSize: DescribeMealPageController.tipIconSize.sp,
-                height: 1,
-              ),
-            ),
-            SizedBox(width: DescribeMealPageController.tipIconGap.w),
-            if (isLast) Expanded(child: labelText) else Flexible(child: labelText),
-          ],
-        ),
-      ),
-    );
+    return chip;
   }
 
   Widget _buildCtaButton(BuildContext context) {
@@ -282,36 +326,44 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
         ? Colors.white
         : DescribeMealPageController.ctaDisabledText;
     final borderRadius = BorderRadius.circular(
-      DescribeMealPageController.ctaRadius.r,
+      PageLayout.primaryButtonRadius.r,
     );
 
-    return Center(
-      child: Material(
-        color: bgColor,
-        elevation: enabled ? 2.5 : 0,
-        shadowColor: enabled
-            ? DescribeMealPageController.ctaEnabledBg.withValues(alpha: 0.28)
-            : Colors.transparent,
-        borderRadius: borderRadius,
-        clipBehavior: Clip.none,
-        child: InkWell(
-          onTap: enabled
-              ? () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => MealAnalysisLoadingPage(
-                        mealText: _controller.text.trim(),
+    return Material(
+      color: bgColor,
+      elevation: enabled ? 2.5 : 0,
+      shadowColor: enabled
+          ? DescribeMealPageController.ctaEnabledBg.withValues(alpha: 0.28)
+          : Colors.transparent,
+      borderRadius: borderRadius,
+      clipBehavior: Clip.none,
+      child: InkWell(
+        onTap: enabled
+            ? () {
+                showMealFeedbackModeSheet(
+                  context,
+                  onInstantFeedback: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => MealAnalysisLoadingPage(
+                          mealText: _controller.text.trim(),
+                        ),
                       ),
-                    ),
-                  );
-                }
-              : null,
-          borderRadius: borderRadius,
-          splashColor: enabled ? Colors.white.withValues(alpha: 0.18) : null,
-          highlightColor: enabled ? Colors.white.withValues(alpha: 0.08) : null,
-          child: SizedBox(
-            width: DescribeMealPageController.ctaMaxWidth.w,
-            height: DescribeMealPageController.ctaHeight.h,
+                    );
+                  },
+                  onWeeklyReflection: () => saveMealForWeeklyReflection(
+                    context,
+                    summary: _controller.text.trim(),
+                  ),
+                );
+              }
+            : null,
+        borderRadius: borderRadius,
+        splashColor: enabled ? Colors.white.withValues(alpha: 0.18) : null,
+        highlightColor: enabled ? Colors.white.withValues(alpha: 0.08) : null,
+        child: SizedBox(
+          width: double.infinity,
+          height: DescribeMealPageController.ctaHeight.h,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -334,7 +386,6 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
             ),
           ),
         ),
-      ),
     );
   }
 

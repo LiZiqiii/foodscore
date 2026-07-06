@@ -10,11 +10,13 @@ class LoginPageController {
 
   static const String greeting = 'Hello!';
   static const String appTitle = 'FoodScore';
+  static const String tagline =
+      'Upload a photo or describe your meal for supportive food quality feedback.';
   static const String emailHint = 'E-mail';
   static const String passwordHint = 'Password';
   static const String loginButton = 'Log in';
-  static const String forgetPassword = 'Forget Password?';
-  static const String noAccountPrefix = 'Do not have an account? ';
+  static const String forgetPassword = 'Forgot password?';
+  static const String noAccountPrefix = 'Don\'t have an account? ';
   static const String signUp = 'Sign up';
 
   // ---------------------------------------------------------------------------
@@ -33,6 +35,7 @@ class LoginPageController {
   static const Color brandGradientStart = Color(0xFF145A2E);
   static const Color brandGradientEnd = Color(0xFF2E9B52);
   static const Color accentDotColor = Color(0xFF7FCB8F);
+  static const Color taglineColor = Color(0xFF6E7268);
   static const Color hintColor = Color(0xFFA8A8A8);
   static const Color inputTextColor = Color(0xFF2C2C2C);
   static const Color inputBackgroundColor = Color(0xFFFFFFFF);
@@ -48,6 +51,7 @@ class LoginPageController {
 
   static const double greetingFontSize = 36;
   static const double brandFontSize = 44;
+  static const double taglineFontSize = 14;
   static const double inputFontSize = 15;
   static const double hintFontSize = 15;
   static const double buttonFontSize = 17;
@@ -58,8 +62,10 @@ class LoginPageController {
   // ---------------------------------------------------------------------------
 
   static const double horizontalPadding = 28;
-  static const double topInset = 44;
-  static const double titleToFormGap = 36;
+  static const double topInset = 52;
+  static const double greetingToBrandGap = 2;
+  static const double brandToTaglineGap = 14;
+  static const double titleToFormGap = 32;
   static const double inputGap = 12;
   static const double formToButtonGap = 24;
   static const double buttonToForgetGap = 28;

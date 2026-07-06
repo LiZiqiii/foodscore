@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'describe_meal_page.dart';
+import '../config/page_layout.dart';
+import '../widgets/page_back_button.dart';
 import 'share_meal_page_controller.dart';
 import 'upload_meal_photo_page.dart';
 
@@ -15,17 +17,8 @@ class ShareMealPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: ShareMealPageController.backgroundColor,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final content = _buildContent(context);
-            if (constraints.maxHeight < 620) {
-              return SingleChildScrollView(child: content);
-            }
-            return SizedBox(
-              height: constraints.maxHeight,
-              child: content,
-            );
-          },
+        child: SingleChildScrollView(
+          child: _buildContent(context),
         ),
       ),
     );
@@ -39,43 +32,18 @@ class ShareMealPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: ShareMealPageController.topExtraPadding.h),
-          _buildBackButton(context),
-          SizedBox(height: ShareMealPageController.backToTitleGap.h),
+          SizedBox(height: PageLayout.topExtraPadding.h),
+          const PageBackButton(),
+          SizedBox(height: PageLayout.backToTitleGap.h),
           _buildTitleSection(),
           SizedBox(height: ShareMealPageController.titleToCardsGap.h),
           _buildPhotoCard(context),
           SizedBox(height: ShareMealPageController.cardGap.h),
           _buildTextCard(context),
-          Expanded(
-            child: Column(
-              children: [
-                Spacer(flex: ShareMealPageController.disclaimerTopFlex),
-                _buildDisclaimer(),
-                Spacer(flex: ShareMealPageController.disclaimerBottomFlex),
-              ],
-            ),
-          ),
+          SizedBox(height: 58.h),
+          _buildDisclaimer(),
+          SizedBox(height: 28.h),
         ],
-      ),
-    );
-  }
-
-  Widget _buildBackButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.of(context).maybePop(),
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 4.h),
-        child: Text(
-          ShareMealPageController.backLabel,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w800,
-            color: ShareMealPageController.backColor,
-            letterSpacing: 0.2,
-          ),
-        ),
       ),
     );
   }

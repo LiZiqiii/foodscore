@@ -22,7 +22,7 @@ class ResultPageController {
   static const List<String> tabLabels = ['Score', 'Insight', 'Tips'];
 
   static const String foodQualityScoreLabel = 'FOOD QUALITY SCORE';
-  static const String outOf10Label = 'OUT OF 10';
+  static const String outOf100Label = 'OUT OF 100';
   static const String scoreBreakdownTitle = 'SCORE BREAKDOWN';
   static const String analysedMealLabel = 'ANALYSED MEAL';
   static const String doesWellSectionTitle = 'WHAT THIS MEAL DOES WELL';
@@ -45,6 +45,45 @@ class ResultPageController {
 
   static const String tipsDisclaimer =
       'These are general suggestions based on typical food quality principles. Every person\'s needs differ. FoodScore is not medical or dietary advice.';
+
+  // Score 页 — 分数说明 bottom sheet（固定文案）
+  static const String scoreExplanationLinkLabel = 'What do these scores mean?';
+  static const String scoreExplanationTitle = 'What do these scores mean?';
+  static const String scoreExplanationSubtitle =
+      'FoodScore estimates meal quality using four simple dimensions.';
+  static const String scoreExplanationIntro =
+      'The overall score is based on the meal information provided, such as the photo and any optional text details. At this prototype stage, each dimension contributes in a similar way to the final score.';
+  static const String scoreExplanationSupportiveNote =
+      'FoodScore highlights both strengths and small areas to improve. It is not designed to judge a single meal as simply “good” or “bad”.';
+  static const String scoreExplanationFooterDisclaimer =
+      'This score is an approximate food quality indicator, not a precise nutrient calculation or medical advice.';
+  static const List<ScoreExplanationDimension> scoreExplanationDimensions = [
+    ScoreExplanationDimension(
+      title: 'Meal Balance',
+      explanation:
+          'Checks whether the meal includes key food groups, such as carbohydrates, protein, vegetables or fruit.',
+    ),
+    ScoreExplanationDimension(
+      title: 'Food Variety',
+      explanation:
+          'Checks the diversity of food groups, colours and ingredients in the meal.',
+    ),
+    ScoreExplanationDimension(
+      title: 'Whole Food Quality',
+      explanation:
+          'Checks whether the meal is mainly based on whole or minimally processed foods.',
+    ),
+    ScoreExplanationDimension(
+      title: 'Processing & Concerns',
+      explanation:
+          'Checks visible or described concerns, such as fried, sugary, salty, or highly processed foods.',
+    ),
+  ];
+
+  static const Color scoreExplanationLinkColor = Color(0xFF4A6B52);
+  static const Color scoreExplanationSubtitleColor = Color(0xFF878984);
+  static const Color scoreExplanationFooterColor = Color(0xFF959694);
+  static const double scoreExplanationSheetHeightFactor = 0.8;
 
   // ---------------------------------------------------------------------------
   // 颜色
@@ -79,9 +118,10 @@ class ResultPageController {
   static const double heroRadius = 20;
   static const double cardRadius = 20;
   static const double insightCardRadius = 15;
+  static const double insightCardTitleFontSize = 15;
 
   /// SafeArea 之外额外下移，避免 Tab 贴顶；SafeArea 本身会避开刘海/状态栏。
-  static const double topExtraPadding = 28;
+  static const double topExtraPadding = 10;
 
   /// Insight 页固定餐食 icon（与首页 meal_bowl 区分）。
   static const String insightMealImageAsset =
@@ -96,4 +136,45 @@ class ResultPageController {
   static ResultDimensionTemplate templateAt(int index) {
     return dimensionTemplates[index];
   }
+
+  /// 固定维度完整定义（name + description），供 mock / GPT schema 对齐。
+  static FoodScoreDimensionDefinition definitionAt(int index) {
+    final template = dimensionTemplates[index];
+    return FoodScoreDimensionDefinition(
+      name: template.name,
+      description: _dimensionDescriptions[index],
+      emoji: template.emoji,
+    );
+  }
+
+  static const List<String> _dimensionDescriptions = [
+    'Protein, carbs, fats and vegetables.',
+    'Different food groups, colours and ingredients.',
+    'Fresh, whole and minimally processed foods.',
+    'Added sugar, salt, sauces or ultra-processed items.',
+  ];
+}
+
+/// 分数说明 sheet 中的维度卡片文案。
+class ScoreExplanationDimension {
+  const ScoreExplanationDimension({
+    required this.title,
+    required this.explanation,
+  });
+
+  final String title;
+  final String explanation;
+}
+
+/// 固定维度定义（name + description + emoji）。
+class FoodScoreDimensionDefinition {
+  const FoodScoreDimensionDefinition({
+    required this.name,
+    required this.description,
+    required this.emoji,
+  });
+
+  final String name;
+  final String description;
+  final String emoji;
 }

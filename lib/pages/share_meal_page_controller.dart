@@ -53,7 +53,7 @@ class ShareMealPageController {
 
   // 页面布局
   static const double horizontalPadding = 24;
-  static const double topExtraPadding = 48;
+  static const double topExtraPadding = 10;
   static const double backToTitleGap = 18;
   static const double titleToSubtitleGap = 14;
   static const double titleToCardsGap = 28;
