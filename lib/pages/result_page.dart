@@ -2,8 +2,18 @@ import 'package:ducafe_ui_core/ducafe_ui_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../models/food_score_insight_item.dart';
 import '../models/food_score_result.dart';
 import 'result_page_controller.dart';
+
+const _insightImprovedSectionTitle = 'WHAT COULD BE IMPROVED';
+const _tipsSectionTitle = 'TIPS FOR NEXT TIME';
+const _emptyDoesWellFallback =
+    'No specific strengths were identified for this meal based on the details provided.';
+const _emptyImprovedFallback =
+    'No specific improvements were suggested for this meal.';
+const _emptyTipsFallback =
+    'No tips are available for this meal yet.';
 
 /// AI 分析结果页（Score / Insight / Tips 横向滑动）。
 class ResultPage extends StatefulWidget {
@@ -186,11 +196,6 @@ class _ScoreTab extends StatelessWidget {
           ],
           SizedBox(height: 18.h),
           Center(child: _ScoreExplanationLink()),
-          SizedBox(height: 16.h),
-          _DisclaimerBox(
-            prefix: ResultPageController.notePrefix,
-            text: ResultPageController.scoreDisclaimer,
-          ),
           SizedBox(height: 24.h),
         ],
       ),
@@ -362,39 +367,59 @@ class _InsightTab extends StatelessWidget {
         children: [
           _InsightHeroCard(result: result),
           SizedBox(height: 18.h),
-          if (result.strengths.isNotEmpty) ...[
-            Text(
-              ResultPageController.doesWellSectionTitle,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w700,
-                color: ResultPageController.sectionTitle,
-                letterSpacing: 0.2,
-              ),
+          Text(
+            ResultPageController.doesWellSectionTitle,
+            style: TextStyle(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w700,
+              color: ResultPageController.sectionTitle,
+              letterSpacing: 0.2,
             ),
-            SizedBox(height: 12.h),
-            for (var i = 0; i < result.strengths.length; i++) ...[
-              if (i > 0) SizedBox(height: 10.h),
-              _InsightCard(item: result.strengths[i]),
-            ],
-            SizedBox(height: 8.h),
-          ],
-          if (result.concerns.isNotEmpty) ...[
-            Text(
-              ResultPageController.concernSectionTitle,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w700,
-                color: ResultPageController.sectionTitle,
-                letterSpacing: 0.2,
+          ),
+          SizedBox(height: 12.h),
+          if (result.whatThisMealDoesWell.isEmpty)
+            _InsightCard(
+              item: const FoodScoreInsightItem(
+                title: 'Details are unclear',
+                description: _emptyDoesWellFallback,
               ),
-            ),
-            SizedBox(height: 12.h),
-            for (var i = 0; i < result.concerns.length; i++) ...[
+              isPositive: true,
+            )
+          else
+            for (var i = 0; i < result.whatThisMealDoesWell.length; i++) ...[
               if (i > 0) SizedBox(height: 10.h),
-              _InsightCard(item: result.concerns[i]),
+              _InsightCard(
+                item: result.whatThisMealDoesWell[i],
+                isPositive: true,
+              ),
             ],
-          ],
+          SizedBox(height: 18.h),
+          Text(
+            _insightImprovedSectionTitle,
+            style: TextStyle(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w700,
+              color: ResultPageController.sectionTitle,
+              letterSpacing: 0.2,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          if (result.whatCouldBeImproved.isEmpty)
+            _InsightCard(
+              item: const FoodScoreInsightItem(
+                title: 'Small improvement',
+                description: _emptyImprovedFallback,
+              ),
+              isPositive: false,
+            )
+          else
+            for (var i = 0; i < result.whatCouldBeImproved.length; i++) ...[
+              if (i > 0) SizedBox(height: 10.h),
+              _InsightCard(
+                item: result.whatCouldBeImproved[i],
+                isPositive: false,
+              ),
+            ],
           SizedBox(height: 24.h),
         ],
       ),
@@ -455,7 +480,7 @@ class _InsightHeroCard extends StatelessWidget {
             ),
           ),
           Text(
-            '${result.overallScore}',
+            '${result.displayOverallScore}',
             style: GoogleFonts.inriaSerif(
               fontSize: 34.sp,
               fontWeight: FontWeight.w700,
@@ -470,16 +495,20 @@ class _InsightHeroCard extends StatelessWidget {
 }
 
 class _InsightCard extends StatelessWidget {
-  const _InsightCard({required this.item});
+  const _InsightCard({
+    required this.item,
+    required this.isPositive,
+  });
 
-  final InsightItem item;
+  final FoodScoreInsightItem item;
+  final bool isPositive;
 
   @override
   Widget build(BuildContext context) {
-    final icon = item.isPositive
+    final icon = isPositive
         ? Icons.check_circle_rounded
-        : Icons.warning_amber_rounded;
-    final iconColor = item.isPositive
+        : Icons.lightbulb_outline_rounded;
+    final iconColor = isPositive
         ? ResultPageController.scoreBarGood
         : ResultPageController.scoreBarFair;
 
@@ -536,6 +565,10 @@ class _TipsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tips = result.tips.trim().isNotEmpty
+        ? result.tips.trim()
+        : _emptyTipsFallback;
+
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(
         horizontal: ResultPageController.horizontalPadding.w,
@@ -543,29 +576,17 @@ class _TipsTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _TipsHeroCard(headline: result.tipsHeadline),
-          if (result.tips.isNotEmpty) ...[
-            SizedBox(height: 18.h),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.fromLTRB(18.w, 18.h, 18.w, 18.h),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(
-                  ResultPageController.insightCardRadius.r,
-                ),
-              ),
-              child: Text(
-                result.tips,
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w400,
-                  color: ResultPageController.cardBody,
-                  height: 1.45,
-                ),
-              ),
+          Text(
+            _tipsSectionTitle,
+            style: TextStyle(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w700,
+              color: ResultPageController.sectionTitle,
+              letterSpacing: 0.3,
             ),
-          ],
+          ),
+          SizedBox(height: 12.h),
+          _TipsHeroCard(body: tips),
           SizedBox(height: 20.h),
           _DisclaimerBox(
             prefix: ResultPageController.rememberPrefix,
@@ -608,9 +629,11 @@ class _TipsTab extends StatelessWidget {
 }
 
 class _TipsHeroCard extends StatelessWidget {
-  const _TipsHeroCard({required this.headline});
+  const _TipsHeroCard({
+    required this.body,
+  });
 
-  final String headline;
+  final String body;
 
   @override
   Widget build(BuildContext context) {
@@ -621,35 +644,14 @@ class _TipsHeroCard extends StatelessWidget {
         color: ResultPageController.heroGreenSolid.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(ResultPageController.heroRadius.r),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text('💡', style: TextStyle(fontSize: 16.sp)),
-              SizedBox(width: 8.w),
-              Text(
-                ResultPageController.nextTimeTryLabel,
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w600,
-                  color: ResultPageController.scoreAccent,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 10.h),
-          Text(
-            headline,
-            style: GoogleFonts.inriaSerif(
-              fontSize: 17.sp,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              height: 1.35,
-            ),
-          ),
-        ],
+      child: Text(
+        body,
+        style: TextStyle(
+          fontSize: 15.sp,
+          fontWeight: FontWeight.w400,
+          color: Colors.white.withValues(alpha: 0.95),
+          height: 1.45,
+        ),
       ),
     );
   }

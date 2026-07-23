@@ -7,9 +7,9 @@ class DescribeMealPageController {
   static const String backLabel = '<  Back';
   static const String title = 'Describe your meal';
   static const String subtitle =
-      'Tell FoodScore what you ate, and it will estimate the meal quality .Be as specific as you possible. ';
+      'Tell FoodScore what you ate. Be as specific as possible.';
   static const String inputHint =
-      'e.g.I had a large bowl of grilled chicken salad with quinoa, mixed leaves, cucumber,tomatoes, and a Caesar dressing. I also had a glass of orange juice.';
+      'e.g. Grilled chicken salad with quinoa and orange juice.';
   static const String ctaLabel = 'Continue';
   static const String disclaimerLine1 = 'Approximate meal-level feedback.';
   static const String disclaimerLine2 =
@@ -29,7 +29,7 @@ class DescribeMealPageController {
   static const Color subtitleColor = Color(0xFF878984);
   static const Color inputBg = Color(0xFFFAFCFA);
   static const Color inputBorderColor = Color(0x0D082310);
-  static const Color inputHintColor = Color(0xFF959694);
+  static const Color inputHintColor = Color(0xFFC8CCC8);
   static const Color inputTextColor = Color(0xFF4A4B48);
   static const Color tipBg = Color(0xFFE1F4F0);
   static const Color tipTextColor = Color(0xFF3D6C47);
@@ -66,6 +66,10 @@ class DescribeMealPageController {
   static const double tipIconSize = 11;
   static const double tipIconGap = 3;
   static const double tipChipPaddingH = 8;
+  /// 左列 chip 左内边距（Drinks / Cooking method 灯泡纵向对齐）。
+  static const double tipLeftColumnInset = 10;
+  /// 右列 chip 左内边距（Sauces / Other details 灯泡纵向对齐）。
+  static const double tipRightColumnInset = 8;
   static const double ctaToDisclaimerGap = 36;
   static const double disclaimerBottomPadding = 20;
   static const double tipsToCtaGap = 40;

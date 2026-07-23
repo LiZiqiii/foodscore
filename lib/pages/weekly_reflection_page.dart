@@ -1,14 +1,19 @@
 import 'package:ducafe_ui_core/ducafe_ui_core.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import '../models/weekly_reflection_meal.dart';
 import '../config/page_layout.dart';
+import '../models/weekly_reflection_meal.dart';
+import '../services/weekly_reflection_format.dart';
 import '../services/weekly_reflection_store.dart';
+import '../models/weekly_reflection_summary.dart';
+import '../services/weekly_reflection_summary_builder.dart';
+import '../services/weekly_reflection_summary_service_factory.dart';
 import '../widgets/page_back_button.dart';
 import 'share_meal_page.dart';
 import 'weekly_reflection_controller.dart';
 
-/// Weekly Reflection 页：无数据时展示 empty state。
+/// Weekly Reflection 页。
 class WeeklyReflectionPage extends StatefulWidget {
   const WeeklyReflectionPage({super.key});
 
@@ -17,32 +22,109 @@ class WeeklyReflectionPage extends StatefulWidget {
 }
 
 class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
-  late List<WeeklyReflectionMeal> _meals;
+  String? _loadedSummaryKey;
+  WeeklyReflectionSummary? _summary;
+  bool _summaryLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _loadMeals();
+    _scheduleSummaryRefresh();
   }
 
-  void _loadMeals() {
-    _meals = WeeklyReflectionStore.instance.meals;
+  String _mealListKey(List<WeeklyReflectionMeal> meals) {
+    return meals.map((meal) => meal.id).join('|');
   }
 
-  void _openAnalyseFlow() {
-    Navigator.of(context).push(
+  void _scheduleSummaryRefresh() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final meals = WeeklyReflectionStore.instance.mealsWithinLast7Days;
+      _refreshSummary(meals);
+    });
+  }
+
+  Future<void> _refreshSummary(List<WeeklyReflectionMeal> meals) async {
+    if (meals.isEmpty) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _summary = null;
+        _summaryLoading = false;
+        _loadedSummaryKey = null;
+      });
+      return;
+    }
+
+    final key = _mealListKey(meals);
+    if (_summaryLoading || key == _loadedSummaryKey) {
+      return;
+    }
+
+    setState(() {
+      _summaryLoading = true;
+    });
+
+    try {
+      final summary =
+          await createWeeklyReflectionSummaryService().buildSummary(meals);
+      if (!mounted || key != _mealListKey(
+            WeeklyReflectionStore.instance.mealsWithinLast7Days,
+          )) {
+        return;
+      }
+      setState(() {
+        _summary = summary;
+        _summaryLoading = false;
+        _loadedSummaryKey = key;
+      });
+    } catch (_) {
+      if (!mounted || key != _mealListKey(
+            WeeklyReflectionStore.instance.mealsWithinLast7Days,
+          )) {
+        return;
+      }
+      setState(() {
+        _summary = WeeklyReflectionSummaryBuilder.build(meals);
+        _summaryLoading = false;
+        _loadedSummaryKey = key;
+      });
+    }
+  }
+
+  Future<void> _openAnalyseFlow() async {
+    await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => const ShareMealPage(),
       ),
     );
+    if (mounted) {
+      setState(() {
+        _loadedSummaryKey = null;
+      });
+      _scheduleSummaryRefresh();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final meals = WeeklyReflectionStore.instance.mealsWithinLast7Days;
+    final key = _mealListKey(meals);
+    if (meals.isNotEmpty &&
+        key != _loadedSummaryKey &&
+        !_summaryLoading) {
+      _scheduleSummaryRefresh();
+    }
+
     return Scaffold(
       backgroundColor: WeeklyReflectionController.backgroundColor,
       body: SafeArea(
-        child: _meals.isEmpty ? _buildEmptyState(context) : _buildContent(context),
+        child: meals.isEmpty
+            ? _buildEmptyState(context)
+            : _buildContent(context, meals),
       ),
     );
   }
@@ -51,7 +133,7 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
     return const PageBackButton();
   }
 
-  Widget _buildPageTitle() {
+  Widget _buildPageHeader() {
     return Text(
       WeeklyReflectionController.title,
       style: TextStyle(
@@ -118,7 +200,7 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
           SizedBox(height: PageLayout.topExtraPadding.h),
           _buildBackButton(context),
           SizedBox(height: PageLayout.backToTitleGap.h),
-          _buildPageTitle(),
+          _buildPageHeader(),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -165,7 +247,10 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
     );
   }
 
-  Widget _buildContent(BuildContext context) {
+  Widget _buildContent(
+    BuildContext context,
+    List<WeeklyReflectionMeal> meals,
+  ) {
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.symmetric(
@@ -177,69 +262,77 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
             SizedBox(height: PageLayout.topExtraPadding.h),
             _buildBackButton(context),
             SizedBox(height: PageLayout.backToTitleGap.h),
-            _buildPageTitle(),
-            SizedBox(height: 24.h),
-            Text(
-              WeeklyReflectionController.savedMealsHeading,
-              style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
-                color: WeeklyReflectionController.titleColor,
-              ),
-            ),
-            SizedBox(height: 12.h),
-            for (final meal in _meals) ...[
-              _buildMealCard(meal),
-              SizedBox(height: 10.h),
+            _buildPageHeader(),
+            SizedBox(height: 28.h),
+            _buildWeeklySummarySection(),
+            SizedBox(height: 36.h),
+            _buildSectionTitle(WeeklyReflectionController.recentMealsTitle),
+            SizedBox(height: 14.h),
+            for (var i = 0; i < meals.length; i++) ...[
+              if (i > 0) SizedBox(height: 12.h),
+              _buildMealCard(meals[i]),
             ],
-            SizedBox(height: 24.h),
+            SizedBox(height: 28.h),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMealCard(WeeklyReflectionMeal meal) {
-    final dateLabel = _formatSavedDate(meal.savedAt);
+  Widget _buildWeeklySummarySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(WeeklyReflectionController.weeklySummaryTitle),
+        SizedBox(height: 16.h),
+        if (_summaryLoading)
+          _buildSummaryLoading()
+        else if (_summary != null) ...[
+          _buildSummarySubsection(
+            title: WeeklyReflectionController.goodPatternsTitle,
+            items: _summary!.goodPatterns,
+          ),
+          SizedBox(height: 14.h),
+          _buildSummarySubsection(
+            title: WeeklyReflectionController.smallFocusTitle,
+            items: _summary!.smallFocus,
+          ),
+        ],
+      ],
+    );
+  }
 
+  Widget _buildSummaryLoading() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 28.h),
       decoration: BoxDecoration(
-        color: WeeklyReflectionController.cardBg,
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: WeeklyReflectionController.cardBorder),
+        color: WeeklyReflectionController.summaryCardBg,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: WeeklyReflectionController.cardBorder.withValues(alpha: 0.8),
+        ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(
-                meal.isPhoto ? Icons.photo_outlined : Icons.edit_note_outlined,
-                size: 16.sp,
-                color: WeeklyReflectionController.backColor,
+          SizedBox(
+            width: 24.w,
+            height: 24.w,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: WeeklyReflectionController.backColor.withValues(
+                alpha: 0.75,
               ),
-              SizedBox(width: 6.w),
-              Text(
-                dateLabel,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w500,
-                  color: WeeklyReflectionController.cardMetaColor,
-                ),
-              ),
-            ],
+            ),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: 14.h),
           Text(
-            meal.summary,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
+            WeeklyReflectionController.summaryLoadingLabel,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14.sp,
-              fontWeight: FontWeight.w400,
-              color: WeeklyReflectionController.titleColor,
+              fontWeight: FontWeight.w500,
+              color: WeeklyReflectionController.subtitleColor,
               height: 1.4,
             ),
           ),
@@ -248,22 +341,162 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
     );
   }
 
-  String _formatSavedDate(DateTime date) {
-    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${weekdays[date.weekday - 1]}, ${date.day} ${months[date.month - 1]}';
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 13.sp,
+        fontWeight: FontWeight.w700,
+        color: WeeklyReflectionController.sectionTitleColor,
+        letterSpacing: 0.25,
+      ),
+    );
+  }
+
+  Widget _buildMealCard(WeeklyReflectionMeal meal) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 14.h),
+      decoration: BoxDecoration(
+        color: WeeklyReflectionController.cardBg,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: WeeklyReflectionController.cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8.r,
+            offset: Offset(0, 2.h),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            meal.mealName,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inriaSerif(
+              fontSize: 17.sp,
+              fontWeight: FontWeight.w700,
+              color: WeeklyReflectionController.titleColor,
+              height: 1.25,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            WeeklyReflectionFormat.dayAndTime(meal.savedAt),
+            style: TextStyle(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w500,
+              color: WeeklyReflectionController.cardMetaColor,
+              height: 1.2,
+            ),
+          ),
+          SizedBox(height: 10.h),
+          Wrap(
+            spacing: 6.w,
+            runSpacing: 6.h,
+            children: [
+              for (final tag in meal.tags) _buildTagChip(tag),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          Text(
+            meal.status,
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w500,
+              color: WeeklyReflectionController.statusColor,
+              height: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTagChip(String label) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      decoration: BoxDecoration(
+        color: WeeklyReflectionController.tagBg,
+        borderRadius: BorderRadius.circular(50.r),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w500,
+          color: WeeklyReflectionController.tagText,
+          height: 1.1,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummarySubsection({
+    required String title,
+    required List<String> items,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 14.h),
+      decoration: BoxDecoration(
+        color: WeeklyReflectionController.summaryCardBg,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: WeeklyReflectionController.cardBorder.withValues(alpha: 0.8),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: WeeklyReflectionController.backColor,
+              height: 1.2,
+            ),
+          ),
+          SizedBox(height: 10.h),
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0) SizedBox(height: 8.h),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(top: 2.h, right: 8.w),
+                  child: Text(
+                    '•',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: WeeklyReflectionController.backColor.withValues(
+                        alpha: 0.65,
+                      ),
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    items[i],
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w400,
+                      color: WeeklyReflectionController.titleColor,
+                      height: 1.45,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }

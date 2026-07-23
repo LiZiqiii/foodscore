@@ -200,6 +200,8 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
                       tips[0],
                       compact: true,
                       extraRight: 10,
+                      columnInset:
+                          DescribeMealPageController.tipLeftColumnInset,
                     ),
                   ),
                 ),
@@ -212,6 +214,8 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
                       tips[1],
                       compact: true,
                       extraRight: 10,
+                      columnInset:
+                          DescribeMealPageController.tipRightColumnInset,
                     ),
                   ),
                 ),
@@ -223,10 +227,11 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
                 SizedBox(
                   width: chipWidth,
                   child: Align(
-                    alignment: Alignment.centerRight,
+                    alignment: Alignment.centerLeft,
                     child: _buildTipChip(
                       tips[2],
-                      leadingInset: 8,
+                      columnInset:
+                          DescribeMealPageController.tipLeftColumnInset,
                     ),
                   ),
                 ),
@@ -234,10 +239,12 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
                 SizedBox(
                   width: chipWidth,
                   child: Align(
-                    alignment: Alignment.centerRight,
+                    alignment: Alignment.centerLeft,
                     child: _buildTipChip(
                       tips[3],
-                      leadingInset: 16,
+                      columnInset:
+                          DescribeMealPageController.tipRightColumnInset,
+                      extraRight: 8,
                     ),
                   ),
                 ),
@@ -253,14 +260,17 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
     String label, {
     bool compact = false,
     double extraRight = 0,
-    double leadingInset = 0,
+    double trimRight = 0,
+    double columnInset = 0,
   }) {
     final chip = Container(
       height: DescribeMealPageController.tipChipHeight.h,
       padding: EdgeInsets.fromLTRB(
         DescribeMealPageController.tipChipPaddingH.w,
         0,
-        (DescribeMealPageController.tipChipPaddingH + extraRight).w,
+        (DescribeMealPageController.tipChipPaddingH + extraRight - trimRight)
+            .clamp(4, 999)
+            .w,
         0,
       ),
       decoration: BoxDecoration(
@@ -307,9 +317,9 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
       ),
     );
 
-    if (leadingInset > 0) {
+    if (columnInset > 0) {
       return Padding(
-        padding: EdgeInsets.only(left: leadingInset.w),
+        padding: EdgeInsets.only(left: columnInset.w),
         child: chip,
       );
     }

@@ -1,3 +1,5 @@
+import 'food_score_insight_item.dart';
+
 /// 单个评分维度（GPT / FastAPI 返回的结构）。
 class FoodScoreDimension {
   const FoodScoreDimension({
@@ -10,11 +12,11 @@ class FoodScoreDimension {
 
   factory FoodScoreDimension.fromJson(Map<String, dynamic> json) {
     return FoodScoreDimension(
-      name: json['name'] as String,
-      description: json['description'] as String,
-      score: (json['score'] as num).toInt(),
-      label: json['label'] as String,
-      feedback: json['feedback'] as String,
+      name: json['name'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      score: (json['score'] as num?)?.toInt() ?? 0,
+      label: json['label'] as String? ?? '',
+      feedback: json['feedback'] as String? ?? '',
     );
   }
 
@@ -24,7 +26,7 @@ class FoodScoreDimension {
   final String label;
   final String feedback;
 
-  double get progress => score.clamp(1, 10) / 10;
+  double get progress => score.clamp(0, 10) / 10;
   String get scoreText => '$score/10';
 }
 
@@ -44,28 +46,31 @@ class ResultDimension {
   String get scoreText => '$score/10';
 }
 
-/// Insight 页条目（title + description 均由 GPT 生成）。
-class InsightItem {
-  const InsightItem({
-    required this.title,
-    required this.description,
-    required this.isPositive,
-  });
-
-  factory InsightItem.fromJson(
-    Map<String, dynamic> json, {
-    required bool isPositive,
-  }) {
-    return InsightItem(
-      title: json['title'] as String,
-      description: json['description'] as String,
-      isPositive: isPositive,
-    );
+/// Parses the dimensions array; returns `[]` when missing or invalid.
+List<FoodScoreDimension> parseFoodScoreDimensions(dynamic value) {
+  if (value is! List) {
+    return const [];
   }
 
-  final String title;
-  final String description;
-  final bool isPositive;
+  final dimensions = <FoodScoreDimension>[];
+  for (final entry in value) {
+    if (entry is Map<String, dynamic>) {
+      dimensions.add(FoodScoreDimension.fromJson(entry));
+    } else if (entry is Map) {
+      dimensions.add(
+        FoodScoreDimension.fromJson(Map<String, dynamic>.from(entry)),
+      );
+    }
+  }
+  return dimensions;
+}
+
+/// Returns a non-null string field from JSON; `''` when missing or invalid.
+String parseFoodScoreStringField(dynamic value) {
+  if (value is String) {
+    return value;
+  }
+  return '';
 }
 
 /// AI 餐食分析结果（与 FastAPI `/analyse-text` JSON 对齐）。
@@ -76,43 +81,31 @@ class FoodScoreResult {
     required this.overallLabel,
     required this.summary,
     required this.dimensions,
-    required this.strengths,
-    required this.concerns,
+    required this.whatThisMealDoesWell,
+    required this.whatCouldBeImproved,
     required this.tips,
     required this.positiveNotes,
     required this.disclaimer,
   });
 
   factory FoodScoreResult.fromJson(Map<String, dynamic> json) {
+    final dimensions = parseFoodScoreDimensions(json['dimensions']);
+    final overallScore = computeOverallScore(dimensions);
+    final overallLabel = computeOverallLabel(overallScore);
+
     return FoodScoreResult(
-      mealName: json['mealName'] as String,
-      overallScore: (json['overallScore'] as num).toInt(),
-      overallLabel: json['overallLabel'] as String,
-      summary: json['summary'] as String,
-      dimensions: (json['dimensions'] as List<dynamic>)
-          .map((e) => FoodScoreDimension.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      strengths: (json['strengths'] as List<dynamic>)
-          .map(
-            (e) => InsightItem.fromJson(
-              e as Map<String, dynamic>,
-              isPositive: true,
-            ),
-          )
-          .toList(),
-      concerns: (json['concerns'] as List<dynamic>)
-          .map(
-            (e) => InsightItem.fromJson(
-              e as Map<String, dynamic>,
-              isPositive: false,
-            ),
-          )
-          .toList(),
-      tips: json['tips'] as String,
-      positiveNotes: (json['positiveNotes'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      disclaimer: json['disclaimer'] as String,
+      mealName: parseFoodScoreStringField(json['mealName']),
+      overallScore: overallScore,
+      overallLabel: overallLabel,
+      summary: parseFoodScoreStringField(json['summary']),
+      dimensions: dimensions,
+      whatThisMealDoesWell:
+          parseFoodScoreInsightList(json['whatThisMealDoesWell']),
+      whatCouldBeImproved:
+          parseFoodScoreInsightList(json['whatCouldBeImproved']),
+      tips: parseFoodScoreStringField(json['tips']),
+      positiveNotes: parsePositiveNotes(json['positiveNotes']),
+      disclaimer: parseFoodScoreStringField(json['disclaimer']),
     );
   }
 
@@ -121,12 +114,14 @@ class FoodScoreResult {
   final String overallLabel;
   final String summary;
   final List<FoodScoreDimension> dimensions;
-  final List<InsightItem> strengths;
-  final List<InsightItem> concerns;
+  final List<FoodScoreInsightItem> whatThisMealDoesWell;
+  final List<FoodScoreInsightItem> whatCouldBeImproved;
 
   /// Tips 页白色文本框内的一段建议（GPT 生成）。
   final String tips;
-  final List<String> positiveNotes;
+
+  /// Tips 页绿色 Hero 段落（餐食已有优点，GPT 生成）。
+  final String positiveNotes;
   final String disclaimer;
 
   /// Score 页四维度进度条（feedback 作为卡片正文，高度随行数自适应）。
@@ -140,10 +135,33 @@ class FoodScoreResult {
       )
       .toList();
 
-  /// Tips 页 Hero 标题。
-  String get tipsHeadline =>
-      positiveNotes.isNotEmpty ? positiveNotes.first : '';
+  /// Tips 页 Hero 正文（positiveNotes 段落）。
+  String get tipsHeadline => positiveNotes;
 
-  /// Score 页展示用总分（GPT 仍为 1–10，展示为 1–100）。
-  int get displayOverallScore => overallScore * 10;
+  /// 四维度 0–10 均值得出 0–100 总分（与后端一致）。
+  static int computeOverallScore(List<FoodScoreDimension> dimensions) {
+    if (dimensions.isEmpty) {
+      return 0;
+    }
+    final total = dimensions.fold<int>(0, (sum, d) => sum + d.score);
+    final average = total / dimensions.length;
+    return (average * 10).round();
+  }
+
+  /// 0–100 总分对应的展示标签（与后端一致）。
+  static String computeOverallLabel(int overallScore) {
+    if (overallScore >= 85) {
+      return 'Excellent';
+    }
+    if (overallScore >= 70) {
+      return 'Good';
+    }
+    if (overallScore >= 50) {
+      return 'Fair';
+    }
+    return 'Could be improved';
+  }
+
+  /// Score / Overview 页展示用总分（0–100）。
+  int get displayOverallScore => overallScore;
 }

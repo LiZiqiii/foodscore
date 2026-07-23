@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:ducafe_ui_core/ducafe_ui_core.dart';
@@ -8,6 +7,7 @@ import '../models/food_score_result.dart';
 import '../services/food_score_service.dart';
 import '../services/food_score_service_factory.dart';
 import '../services/mock_food_score_service.dart';
+import '../services/weekly_reflection_store.dart';
 import 'meal_analysis_loading_controller.dart';
 import 'result_page.dart';
 
@@ -39,8 +39,6 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
   late final AnimationController _spinController;
   late final AnimationController _pulseController;
   late final Animation<double> _pulseAnimation;
-  Timer? _stepTimer;
-  int _activeStepIndex = 0;
   bool _isAnalysing = true;
   String? _errorMessage;
 
@@ -58,30 +56,7 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
     _pulseAnimation = Tween<double>(begin: 0.92, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-    _startStepAnimation();
     _runAnalysis();
-  }
-
-  void _startStepAnimation() {
-    _stepTimer?.cancel();
-    _stepTimer = Timer.periodic(
-      MealAnalysisLoadingController.stepHighlightInterval,
-      (_) {
-        if (!mounted || !_isAnalysing) {
-          return;
-        }
-        setState(() {
-          _activeStepIndex =
-              (_activeStepIndex + 1) %
-              MealAnalysisLoadingController.analysisSteps.length;
-        });
-      },
-    );
-  }
-
-  void _stopStepAnimation() {
-    _stepTimer?.cancel();
-    _stepTimer = null;
   }
 
   FoodScoreService _createService() => createFoodScoreService();
@@ -91,7 +66,6 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
       _isAnalysing = true;
       _errorMessage = null;
     });
-    _startStepAnimation();
     if (!_spinController.isAnimating) {
       _spinController.repeat();
     }
@@ -127,7 +101,6 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
     if (!mounted) {
       return;
     }
-    _stopStepAnimation();
     _spinController.stop();
     _pulseController.stop();
     setState(() {
@@ -146,7 +119,14 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
     if (!mounted) {
       return;
     }
-    _stopStepAnimation();
+
+    final isPhoto =
+        widget.imagePath != null && widget.imagePath!.isNotEmpty;
+    WeeklyReflectionStore.instance.addFromInstantFeedback(
+      result,
+      isPhoto: isPhoto,
+    );
+
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (_) => ResultPage(result: result),
@@ -156,7 +136,6 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
 
   @override
   void dispose() {
-    _stepTimer?.cancel();
     _spinController.dispose();
     _pulseController.dispose();
     super.dispose();
@@ -178,12 +157,10 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildLoadingCard(),
-                    SizedBox(
-                      height: MealAnalysisLoadingController.cardToStepsGap.h,
-                    ),
-                    if (_isAnalysing) _buildStepChips(),
-                    if (!_isAnalysing && _errorMessage != null)
+                    if (!_isAnalysing && _errorMessage != null) ...[
+                      SizedBox(height: 16.h),
                       _buildErrorPanel(),
+                    ],
                   ],
                 ),
               ),
@@ -304,24 +281,6 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
     );
   }
 
-  Widget _buildStepChips() {
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 8.w,
-      runSpacing: 8.h,
-      children: [
-        for (var i = 0;
-            i < MealAnalysisLoadingController.analysisSteps.length;
-            i++)
-          _StepChip(
-            label: MealAnalysisLoadingController.analysisSteps[i],
-            isActive: i == _activeStepIndex,
-            index: i,
-          ),
-      ],
-    );
-  }
-
   Widget _buildErrorPanel() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -380,54 +339,6 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
           ),
         ),
       ],
-    );
-  }
-}
-
-class _StepChip extends StatelessWidget {
-  const _StepChip({
-    required this.label,
-    required this.isActive,
-    required this.index,
-  });
-
-  final String label;
-  final bool isActive;
-  final int index;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedOpacity(
-      opacity: isActive ? 1 : 0.55,
-      duration: Duration(milliseconds: 450 + index * 80),
-      curve: Curves.easeOut,
-      child: AnimatedScale(
-        scale: isActive ? 1.0 : 0.96,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOut,
-        child: Container(
-          height: MealAnalysisLoadingController.stepChipHeight.h,
-          padding: EdgeInsets.symmetric(horizontal: 12.w),
-          decoration: BoxDecoration(
-            color: isActive
-                ? MealAnalysisLoadingController.stepChipBg
-                : MealAnalysisLoadingController.stepChipBg.withValues(
-                    alpha: 0.65,
-                  ),
-            borderRadius: BorderRadius.circular(50.r),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: MealAnalysisLoadingController.stepFontSize.sp,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-              color: MealAnalysisLoadingController.stepChipText,
-              height: 1.1,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

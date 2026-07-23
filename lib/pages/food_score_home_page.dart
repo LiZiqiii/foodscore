@@ -153,8 +153,7 @@ class FoodScoreHomePage extends StatelessWidget {
                   child: Text(
                     FoodScoreHomeController.welcomeTitleLine2,
                     style: TextStyle(
-                      fontSize: FoodScoreHomeController
-                          .welcomeTitleLine2FontSize.sp,
+                      fontSize: FoodScoreHomeController.welcomeTitleFontSize.sp,
                       fontWeight: FontWeight.w600,
                       color: FoodScoreHomeController.welcomeTitleColor,
                       height: 1.15,
@@ -175,10 +174,15 @@ class FoodScoreHomePage extends StatelessWidget {
               ],
             ),
           ),
-          Image.asset(
-            FoodScoreHomeController.mealImageAsset,
-            width: FoodScoreHomeController.welcomeMealImageWidth.w,
-            fit: BoxFit.contain,
+          SizedBox(
+            height:
+                (FoodScoreHomeController.welcomeCardHeight - 36).h,
+            child: Image.asset(
+              FoodScoreHomeController.mealImageAsset,
+              width: FoodScoreHomeController.welcomeMealImageWidth.w,
+              fit: BoxFit.contain,
+              alignment: Alignment.centerRight,
+            ),
           ),
         ],
       ),
@@ -304,7 +308,7 @@ class FoodScoreHomePage extends StatelessWidget {
         child: Container(
           width: double.infinity,
           height: FoodScoreHomeController.reflectionCardHeight.h,
-          padding: EdgeInsets.fromLTRB(14.w, 10.h, 12.w, 10.h),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
           decoration: BoxDecoration(
             color: FoodScoreHomeController.backgroundColor,
             borderRadius: borderRadius,
@@ -316,32 +320,15 @@ class FoodScoreHomePage extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      FoodScoreHomeController.reflectionTitle,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: FoodScoreHomeController.reflectionTitleColor,
-                        height: 1.15,
-                      ),
-                    ),
-                    SizedBox(height: 3.h),
-                    Text(
-                      FoodScoreHomeController.reflectionSubtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w400,
-                        color: FoodScoreHomeController.reflectionSubtitleColor,
-                        height: 1.2,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  FoodScoreHomeController.reflectionTitle,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: FoodScoreHomeController.reflectionTitleColor,
+                    height: 1.15,
+                  ),
                 ),
               ),
               Icon(

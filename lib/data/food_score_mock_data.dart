@@ -1,3 +1,4 @@
+import '../models/food_score_insight_item.dart';
 import '../models/food_score_result.dart';
 import '../pages/result_page_controller.dart';
 
@@ -40,9 +41,13 @@ class FoodScoreMockData {
     );
   }
 
+  static FoodScoreInsightItem _well(String title, String description) {
+    return FoodScoreInsightItem(title: title, description: description);
+  }
+
   static final FoodScoreResult highScoreMockResult = FoodScoreResult(
     mealName: 'Grilled salmon with quinoa and roasted vegetables',
-    overallScore: 9,
+    overallScore: 85,
     overallLabel: 'Excellent',
     summary: 'An excellent, well-balanced whole-food meal.',
     dimensions: [
@@ -71,40 +76,33 @@ class FoodScoreMockData {
         feedback: 'No major processing concerns identified.',
       ),
     ],
-    strengths: const [
-      InsightItem(
-        title: 'Lean protein',
-        description:
-            'Salmon provides omega-3 fats and high-quality protein without excess saturated fat.',
-        isPositive: true,
+    whatThisMealDoesWell: [
+      _well(
+        'Lean protein',
+        'Salmon provides omega-3 fats and high-quality protein without excess saturated fat.',
       ),
-      InsightItem(
-        title: 'Whole grains',
-        description:
-            'Quinoa adds fibre and complete plant protein alongside the vegetables.',
-        isPositive: true,
+      _well(
+        'Whole grains',
+        'Quinoa adds fibre and complete plant protein alongside the vegetables.',
       ),
     ],
-    concerns: const [
-      InsightItem(
-        title: 'Portion awareness',
-        description:
-            'Salmon portions can be calorie-dense if regularly oversized.',
-        isPositive: false,
+    whatCouldBeImproved: [
+      _well(
+        'Portion awareness',
+        'Salmon portions can be calorie-dense if regularly oversized.',
       ),
     ],
     tips:
-        'Keep this pattern — lean protein, whole grains, and colourful veg is a strong baseline. '
-        'You could add a small handful of seeds for extra minerals without changing the meal much.',
-    positiveNotes: const [
-      'You are already close to an ideal meal pattern.',
-    ],
+        'Next time, you could add a small handful of seeds for extra texture, or include one more colourful vegetable to build on the variety you already have.',
+    positiveNotes:
+        'This meal includes lean protein from salmon, whole grains from quinoa, and a colourful vegetable mix. '
+        'Most ingredients appear minimally processed, which supports a strong overall food quality score.',
     disclaimer: defaultDisclaimer,
   );
 
   static final FoodScoreResult mediumScoreMockResult = FoodScoreResult(
     mealName: 'Grilled chicken salad',
-    overallScore: 7,
+    overallScore: 70,
     overallLabel: 'Good',
     summary:
         'A balanced meal with lean protein, whole grains, and vegetables. '
@@ -139,53 +137,42 @@ class FoodScoreMockData {
             'Low in highly processed ingredients, but the sauce may contain added salt or sugar.',
       ),
     ],
-    strengths: const [
-      InsightItem(
-        title: 'High-quality protein source',
-        description:
-            'Grilled chicken provides lean protein without excess saturated fat.',
-        isPositive: true,
+    whatThisMealDoesWell: [
+      _well(
+        'High-quality protein source',
+        'Grilled chicken provides lean protein without excess saturated fat.',
       ),
-      InsightItem(
-        title: 'Colourful vegetables',
-        description:
-            'Mixed leaves and vegetables add fibre and micronutrients to the meal.',
-        isPositive: true,
+      _well(
+        'Colourful vegetables',
+        'Mixed leaves and vegetables add fibre and micronutrients to the meal.',
       ),
-      InsightItem(
-        title: 'Whole grain carbohydrates',
-        description: 'Quinoa is a complete protein and complex carbohydrate.',
-        isPositive: true,
+      _well(
+        'Whole grain carbohydrates',
+        'Quinoa is a complete protein and complex carbohydrate.',
       ),
     ],
-    concerns: const [
-      InsightItem(
-        title: 'Unknown dressing ingredients',
-        description:
-            'Pre-made dressings often contain added sugars, refined oils, and excess sodium. The exact composition is not visible.',
-        isPositive: false,
+    whatCouldBeImproved: [
+      _well(
+        'Unknown dressing ingredients',
+        'Pre-made dressings often contain added sugars, refined oils, and excess sodium. The exact composition is not visible.',
       ),
-      InsightItem(
-        title: 'Limited healthy fat sources',
-        description:
-            'The meal could benefit from avocado, nuts, or olive oil to improve fat-soluble vitamin absorption.',
-        isPositive: false,
+      _well(
+        'Limited healthy fat sources',
+        'The meal could benefit from avocado, nuts, or olive oil to improve fat-soluble vitamin absorption.',
       ),
     ],
     tips:
-        'Add a healthy fat such as avocado or walnuts to support fat-soluble vitamin absorption. '
-        'Swap creamy dressing for olive oil and lemon to reduce added sugar and refined oils. '
-        'Include an extra vegetable portion to push variety and fibre closer to your daily target.',
-    positiveNotes: const [
-      'Small swaps can push your score from 7 to 8+ with minimal effort.',
-    ],
+        'Next time, you could swap creamy dressing for olive oil and lemon, and add avocado or walnuts for a clearer healthy fat source.',
+    positiveNotes:
+        'This meal includes a clear protein source from grilled chicken, whole grains from quinoa, and colourful vegetables from mixed leaves and tomatoes. '
+        'These choices support meal balance and variety.',
     disclaimer: defaultDisclaimer,
   );
 
   static final FoodScoreResult lowScoreMockResult = FoodScoreResult(
     mealName: 'Large pepperoni pizza with garlic bread and fizzy drink',
-    overallScore: 3,
-    overallLabel: 'Poor',
+    overallScore: 25,
+    overallLabel: 'Could be improved',
     summary:
         'This meal is heavily skewed toward refined carbohydrates, saturated '
         'fat, and ultra-processed ingredients, with very little fibre or '
@@ -220,48 +207,35 @@ class FoodScoreMockData {
             'High processing level with likely excess sodium, saturated fat, and added sugars.',
       ),
     ],
-    strengths: const [
-      InsightItem(
-        title: 'Provides energy',
-        description:
-            'The meal delivers quick calories, which may be acceptable occasionally in an otherwise balanced diet.',
-        isPositive: true,
+    whatThisMealDoesWell: [
+      _well(
+        'Provides energy',
+        'The meal delivers quick calories, which may be acceptable occasionally in an otherwise balanced diet.',
       ),
     ],
-    concerns: const [
-      InsightItem(
-        title: 'Ultra-processed meat',
-        description:
-            'Processed pepperoni is typically high in sodium, saturated fat, and preservatives.',
-        isPositive: false,
+    whatCouldBeImproved: [
+      _well(
+        'Ultra-processed meat',
+        'Processed pepperoni is typically high in sodium, saturated fat, and preservatives.',
       ),
-      InsightItem(
-        title: 'Refined carbohydrate base',
-        description:
-            'White-flour pizza base lacks fibre and may spike blood glucose compared with whole-grain options.',
-        isPositive: false,
+      _well(
+        'Refined carbohydrate base',
+        'White-flour pizza base lacks fibre and may spike blood glucose compared with whole-grain options.',
       ),
-      InsightItem(
-        title: 'Sugary drink',
-        description:
-            'A fizzy drink adds empty calories and added sugar without supporting satiety.',
-        isPositive: false,
+      _well(
+        'Sugary drink',
+        'A fizzy drink adds empty calories and added sugar without supporting satiety.',
       ),
-      InsightItem(
-        title: 'Minimal vegetables',
-        description:
-            'There is little visible plant food, reducing fibre and micronutrient intake for this meal.',
-        isPositive: false,
+      _well(
+        'Minimal vegetables',
+        'There is little visible plant food, reducing fibre and micronutrient intake for this meal.',
       ),
     ],
     tips:
-        'Swap half the pizza for a side salad with olive oil to add fibre and reduce refined-carb density. '
-        'Choose water instead of a fizzy drink to cut added sugar. '
-        'If ordering pizza again, pick a thin whole-grain base and add extra vegetable toppings. '
-        'Limit processed meat to occasional use, and plan the next meal around vegetables, legumes, and whole grains.',
-    positiveNotes: const [
-      'Several small changes could move this meal from 3 toward 5–6 over time.',
-    ],
+        'Next time, you could choose water instead of a fizzy drink and add a side salad with extra vegetable toppings to improve variety.',
+    positiveNotes:
+        'This meal provides a familiar combination of pizza and garlic bread. '
+        'There is some protein from the pepperoni, though plant foods and whole-food variety are limited in what was described.',
     disclaimer: defaultDisclaimer,
   );
 }

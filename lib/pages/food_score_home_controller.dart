@@ -11,7 +11,6 @@ class FoodScoreHomeController {
 
   static const String ctaLabel = 'Analyse a meal';
   static const String reflectionTitle = 'Weekly Reflection';
-  static const String reflectionSubtitle = 'Recent patterns and gentle focus';
   static const String disclaimerLine1 = 'Approximate meal-level feedback.';
   static const String disclaimerLine2 =
       'Not medical advice or precise nutrient calculation.';
@@ -46,7 +45,6 @@ class FoodScoreHomeController {
   static const Color brandColor = Color(0xFF1A6731);
   static const Color userAvatarBg = Color(0xFF1A6731);
   static const Color reflectionTitleColor = Color(0xFF4A4B48);
-  static const Color reflectionSubtitleColor = Color(0xFF959694);
   static const Color reflectionBorderColor = Color(0xFFCDD8CD);
   static const Color reflectionArrowColor = Color(0xFFB8C0B8);
   static const Color disclaimerColor = Color(0xFF8A8C88);
@@ -61,9 +59,8 @@ class FoodScoreHomeController {
   static const double welcomeCardHeight = 128;
   static const double welcomeCardRadius = 16;
   static const double welcomeTitleFontSize = 22;
-  static const double welcomeTitleLine2FontSize = 19;
   static const double welcomeSubtitleFontSize = 13;
-  static const double welcomeMealImageWidth = 72;
+  static const double welcomeMealImageWidth = 92;
   static const double welcomeToFeaturesGap = 20;
   static const double featuresToCtaGap = 32;
   static const double featureIconBoxSize = 26;
@@ -71,11 +68,11 @@ class FoodScoreHomeController {
   static const double featureFontSize = 13;
   static const double featureRowGap = 8;
   static const double ctaHeight = 48;
-  static const double reflectionCardHeight = 62;
+  static const double reflectionCardHeight = 50;
   static const double reflectionCardRadius = 12;
   static const double ctaToReflectionGap = 12;
-  static const double reflectionToDisclaimerGap = 48;
-  static const double disclaimerBottomPadding = 40;
+  static const double reflectionToDisclaimerGap = 72;
+  static const double disclaimerBottomPadding = 52;
 }
 
 /// 首页功能项。

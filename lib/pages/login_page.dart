@@ -2,7 +2,9 @@ import 'package:ducafe_ui_core/ducafe_ui_core.dart';
 import 'package:flutter/material.dart';
 
 import 'food_score_home_page.dart';
+import 'forgot_password_page.dart';
 import 'login_page_controller.dart';
+import 'sign_up_page.dart';
 
 /// FoodScore 登录页。
 class LoginPage extends StatefulWidget {
@@ -57,7 +59,7 @@ class _LoginPageState extends State<LoginPage> {
                             height: LoginPageController.titleToFormGap.h,
                           ),
                           _buildFormBlock(context, formWidth),
-                          SizedBox(height: 24.h),
+                          SizedBox(height: 32.h),
                         ],
                       ),
                     ),
@@ -195,7 +197,7 @@ class _LoginPageState extends State<LoginPage> {
             SizedBox(height: LoginPageController.buttonToForgetGap.h),
             _buildForgetPasswordLink(),
             SizedBox(height: LoginPageController.forgetToSignUpGap.h),
-            _buildSignUpFooter(),
+            _buildSignUpFooter(context),
           ],
         ),
       ),
@@ -303,39 +305,57 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _buildForgetPasswordLink() {
     return GestureDetector(
-      onTap: () {},
-      child: Text(
-        LoginPageController.forgetPassword,
-        style: TextStyle(
-          fontSize: LoginPageController.linkFontSize.sp,
-          fontWeight: FontWeight.w500,
-          color: LoginPageController.linkColor,
-          decoration: TextDecoration.underline,
-          decorationColor: LoginPageController.linkColor,
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const ForgotPasswordPage(),
+          ),
+        );
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 10.h),
+        child: Text(
+          LoginPageController.forgetPassword,
+          style: TextStyle(
+            fontSize: LoginPageController.linkFontSize.sp,
+            fontWeight: FontWeight.w500,
+            color: LoginPageController.linkColor,
+            decoration: TextDecoration.underline,
+            decorationColor: LoginPageController.linkColor,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSignUpFooter() {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: GestureDetector(
-        onTap: () {},
-        behavior: HitTestBehavior.opaque,
-        child: Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: LoginPageController.noAccountPrefix,
-                style: TextStyle(
-                  fontSize: LoginPageController.linkFontSize.sp,
-                  fontWeight: FontWeight.w500,
-                  color: LoginPageController.footerTextColor,
+  Widget _buildSignUpFooter(BuildContext context) {
+    return Center(
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            LoginPageController.noAccountPrefix,
+            style: TextStyle(
+              fontSize: LoginPageController.linkFontSize.sp,
+              fontWeight: FontWeight.w500,
+              color: LoginPageController.footerTextColor,
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const SignUpPage(),
                 ),
-              ),
-              TextSpan(
-                text: LoginPageController.signUp,
+              );
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(4.w, 10.h, 4.w, 10.h),
+              child: Text(
+                LoginPageController.signUp,
                 style: TextStyle(
                   fontSize: LoginPageController.linkFontSize.sp,
                   fontWeight: FontWeight.w600,
@@ -344,11 +364,9 @@ class _LoginPageState extends State<LoginPage> {
                   decorationColor: LoginPageController.linkColor,
                 ),
               ),
-            ],
+            ),
           ),
-          maxLines: 1,
-          softWrap: false,
-        ),
+        ],
       ),
     );
   }

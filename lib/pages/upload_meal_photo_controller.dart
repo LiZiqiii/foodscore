@@ -31,7 +31,7 @@ class UploadMealPhotoController {
   static const Color descriptionOptionalColor = Color(0x73000000);
   static const Color descriptionInputBg = Color(0xFFFAFCFA);
   static const Color descriptionInputBorder = Color(0x0D082310);
-  static const Color descriptionHintColor = Color(0xFF959694);
+  static const Color descriptionHintColor = Color(0xFFC8CCC8);
   static const Color descriptionTextColor = Color(0xFF4A4B48);
   static const Color ctaDisabledBg = Color(0xFFF5F5F5);
   static const Color ctaDisabledText = Color(0x2B1A6731);

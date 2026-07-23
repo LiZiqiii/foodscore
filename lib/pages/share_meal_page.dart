@@ -40,9 +40,9 @@ class ShareMealPage extends StatelessWidget {
           _buildPhotoCard(context),
           SizedBox(height: ShareMealPageController.cardGap.h),
           _buildTextCard(context),
-          SizedBox(height: 58.h),
+          SizedBox(height: 80.h),
           _buildDisclaimer(),
-          SizedBox(height: 28.h),
+          SizedBox(height: 36.h),
         ],
       ),
     );
