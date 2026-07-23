@@ -46,3 +46,4 @@ app.*.map.json
 
 # FoodScore backend secrets
 backend/.env
+backend/foodscore.db

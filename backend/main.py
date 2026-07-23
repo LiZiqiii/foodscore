@@ -3,6 +3,8 @@ FoodScore local FastAPI proxy.
 
 Flutter -> POST /analyse-text -> OpenAI (structured JSON) -> FoodScoreResult JSON
 Flutter -> POST /weekly-summary -> OpenAI (structured JSON) -> Weekly summary JSON
+Flutter -> POST /meal-records -> SQLite (save analysed meal)
+Flutter -> GET /meal-records/recent -> SQLite (recent meal history)
 
 API key lives only in backend/.env (OPENAI_API_KEY).
 """
@@ -11,13 +13,21 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 from pydantic import BaseModel, Field, field_validator
+
+from database import (
+    DEFAULT_USER_ID,
+    get_recent_meal_records,
+    init_db,
+    insert_meal_record,
+)
 
 load_dotenv()
 
@@ -328,6 +338,35 @@ class WeeklySummaryResponse(BaseModel):
     smallFocus: list[str] = Field(min_length=1, max_length=3)
 
 
+class SaveMealRecordRequest(BaseModel):
+    userId: str = Field(default=DEFAULT_USER_ID, min_length=1)
+    mealText: str = Field(min_length=1)
+    result: FoodScoreResultResponse
+
+
+class SaveMealRecordResponse(BaseModel):
+    id: int
+    userId: str
+    mealName: str
+    createdAt: str
+
+
+class MealRecordSummary(BaseModel):
+    id: int
+    userId: str
+    mealName: str
+    mealText: str
+    overallScore: int = Field(ge=0, le=100)
+    overallLabel: str
+    summary: str
+    tips: str
+    createdAt: str
+
+
+class RecentMealRecordsResponse(BaseModel):
+    meals: list[MealRecordSummary]
+
+
 def _compute_overall_score(dimensions: list[dict[str, Any]]) -> int:
     scores = [int(d["score"]) for d in dimensions]
     average = sum(scores) / len(scores)
@@ -391,6 +430,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def on_startup() -> None:
+    try:
+        init_db()
+    except sqlite3.Error as error:
+        raise RuntimeError(f"Failed to initialize SQLite database: {error}") from error
 
 
 def _get_openai_client() -> OpenAI:
@@ -545,6 +592,66 @@ def weekly_summary(request: WeeklySummaryRequest) -> WeeklySummaryResponse:
         raise HTTPException(
             status_code=502,
             detail=f"Failed to generate weekly summary: {error}",
+        ) from error
+
+
+@app.post("/meal-records", response_model=SaveMealRecordResponse)
+def save_meal_record(request: SaveMealRecordRequest) -> SaveMealRecordResponse:
+    meal_text = request.mealText.strip()
+    if not meal_text:
+        raise HTTPException(status_code=400, detail="mealText cannot be empty.")
+
+    user_id = request.userId.strip()
+    if not user_id:
+        raise HTTPException(status_code=400, detail="userId cannot be empty.")
+
+    try:
+        result_payload = request.result.model_dump()
+        saved = insert_meal_record(
+            user_id=user_id,
+            meal_text=meal_text,
+            result=result_payload,
+        )
+        return SaveMealRecordResponse.model_validate(saved)
+    except sqlite3.Error as error:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save meal record: {error}",
+        ) from error
+    except HTTPException:
+        raise
+    except Exception as error:  # noqa: BLE001 — surface as API error
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save meal record: {error}",
+        ) from error
+
+
+@app.get("/meal-records/recent", response_model=RecentMealRecordsResponse)
+def recent_meal_records(
+    userId: str = Query(default=DEFAULT_USER_ID, min_length=1),
+    limit: int = Query(default=10, ge=1, le=100),
+) -> RecentMealRecordsResponse:
+    user_id = userId.strip()
+    if not user_id:
+        raise HTTPException(status_code=400, detail="userId cannot be empty.")
+
+    try:
+        meals = get_recent_meal_records(user_id=user_id, limit=limit)
+        return RecentMealRecordsResponse(
+            meals=[MealRecordSummary.model_validate(meal) for meal in meals]
+        )
+    except sqlite3.Error as error:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load meal records: {error}",
+        ) from error
+    except HTTPException:
+        raise
+    except Exception as error:  # noqa: BLE001 — surface as API error
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load meal records: {error}",
         ) from error
 
 
