@@ -2,13 +2,19 @@ import 'package:ducafe_ui_core/ducafe_ui_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../config/app_config.dart';
 import '../config/page_layout.dart';
+import '../models/user_profile.dart';
 import '../models/weekly_reflection_meal.dart';
+import '../services/meal_record_service_factory.dart';
+import '../services/user_profile_service_factory.dart';
 import '../services/weekly_reflection_format.dart';
 import '../services/weekly_reflection_store.dart';
 import '../models/weekly_reflection_summary.dart';
 import '../services/weekly_reflection_summary_builder.dart';
+import '../services/weekly_reflection_summary_cache.dart';
 import '../services/weekly_reflection_summary_service_factory.dart';
+import '../widgets/app_spot_illustration.dart';
 import '../widgets/page_back_button.dart';
 import 'share_meal_page.dart';
 import 'weekly_reflection_controller.dart';
@@ -24,16 +30,84 @@ class WeeklyReflectionPage extends StatefulWidget {
 class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
   String? _loadedSummaryKey;
   WeeklyReflectionSummary? _summary;
+  UserProfile? _coachingProfile;
   bool _summaryLoading = false;
+  bool _mealsLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _loadPageData();
+  }
+
+  Future<void> _loadCoachingProfile() async {
+    if (AppConfig.useMockResult) {
+      _coachingProfile = null;
+      return;
+    }
+
+    try {
+      _coachingProfile =
+          await createUserProfileService().loadProfile(currentUserId);
+    } catch (error) {
+      debugPrint('Failed to load coaching profile for weekly summary: $error');
+      _coachingProfile = null;
+    }
+  }
+
+  Future<void> _loadPageData() async {
+    setState(() {
+      _mealsLoading = true;
+    });
+
+    await _loadCoachingProfile();
+
+    if (AppConfig.useMockResult) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _mealsLoading = false);
+      _scheduleSummaryRefresh();
+      return;
+    }
+
+    final service = createMealRecordService();
+    if (service == null) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _mealsLoading = false);
+      _scheduleSummaryRefresh();
+      return;
+    }
+
+    try {
+      final meals = await service.fetchRecentMealRecords(
+        userId: currentUserId,
+        days: AppConfig.weeklyReflectionDays,
+        limit: 30,
+      );
+      WeeklyReflectionStore.instance.replaceMealsFromBackend(meals);
+    } catch (error) {
+      debugPrint('Failed to load meal records from backend: $error');
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _mealsLoading = false;
+    });
     _scheduleSummaryRefresh();
   }
 
-  String _mealListKey(List<WeeklyReflectionMeal> meals) {
-    return meals.map((meal) => meal.id).join('|');
+  String _summaryContextKey(List<WeeklyReflectionMeal> meals) {
+    return WeeklyReflectionSummaryCache.contextKey(
+      userId: currentUserId,
+      meals: meals,
+      profile: _coachingProfile,
+    );
   }
 
   void _scheduleSummaryRefresh() {
@@ -59,8 +133,24 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
       return;
     }
 
-    final key = _mealListKey(meals);
-    if (_summaryLoading || key == _loadedSummaryKey) {
+    final contextKey = _summaryContextKey(meals);
+    if (contextKey == _loadedSummaryKey && _summary != null) {
+      return;
+    }
+
+    final cached = WeeklyReflectionSummaryCache.get(
+      userId: currentUserId,
+      contextKey: contextKey,
+    );
+    if (cached != null) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _summary = cached;
+        _loadedSummaryKey = contextKey;
+        _summaryLoading = false;
+      });
       return;
     }
 
@@ -69,29 +159,59 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
     });
 
     try {
-      final summary =
-          await createWeeklyReflectionSummaryService().buildSummary(meals);
-      if (!mounted || key != _mealListKey(
-            WeeklyReflectionStore.instance.mealsWithinLast7Days,
-          )) {
+      final summary = await createWeeklyReflectionSummaryService().buildSummary(
+        meals,
+        userId: currentUserId,
+      );
+      if (!mounted) {
         return;
       }
+
+      final currentMeals = WeeklyReflectionStore.instance.mealsWithinLast7Days;
+      final currentKey = _summaryContextKey(currentMeals);
+      if (currentKey != contextKey) {
+        _scheduleSummaryRefresh();
+        return;
+      }
+
+      WeeklyReflectionSummaryCache.save(
+        userId: currentUserId,
+        contextKey: contextKey,
+        summary: summary,
+      );
       setState(() {
         _summary = summary;
-        _summaryLoading = false;
-        _loadedSummaryKey = key;
+        _loadedSummaryKey = contextKey;
       });
-    } catch (_) {
-      if (!mounted || key != _mealListKey(
-            WeeklyReflectionStore.instance.mealsWithinLast7Days,
-          )) {
+    } catch (error) {
+      debugPrint('Weekly summary failed, using local fallback: $error');
+      if (!mounted) {
         return;
       }
+
+      final currentMeals = WeeklyReflectionStore.instance.mealsWithinLast7Days;
+      final currentKey = _summaryContextKey(currentMeals);
+      if (currentKey != contextKey) {
+        _scheduleSummaryRefresh();
+        return;
+      }
+
+      final fallback = WeeklyReflectionSummaryBuilder.build(meals);
+      WeeklyReflectionSummaryCache.save(
+        userId: currentUserId,
+        contextKey: contextKey,
+        summary: fallback,
+      );
       setState(() {
-        _summary = WeeklyReflectionSummaryBuilder.build(meals);
-        _summaryLoading = false;
-        _loadedSummaryKey = key;
+        _summary = fallback;
+        _loadedSummaryKey = contextKey;
       });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _summaryLoading = false;
+        });
+      }
     }
   }
 
@@ -102,29 +222,29 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
       ),
     );
     if (mounted) {
-      setState(() {
-        _loadedSummaryKey = null;
-      });
-      _scheduleSummaryRefresh();
+      await _loadPageData();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final meals = WeeklyReflectionStore.instance.mealsWithinLast7Days;
-    final key = _mealListKey(meals);
-    if (meals.isNotEmpty &&
-        key != _loadedSummaryKey &&
-        !_summaryLoading) {
+    final contextKey = meals.isEmpty ? null : _summaryContextKey(meals);
+    if (contextKey != null &&
+        contextKey != _loadedSummaryKey &&
+        !_summaryLoading &&
+        !_mealsLoading) {
       _scheduleSummaryRefresh();
     }
 
     return Scaffold(
       backgroundColor: WeeklyReflectionController.backgroundColor,
       body: SafeArea(
-        child: meals.isEmpty
-            ? _buildEmptyState(context)
-            : _buildContent(context, meals),
+        child: _mealsLoading
+            ? const Center(child: CircularProgressIndicator())
+            : meals.isEmpty
+                ? _buildEmptyState(context)
+                : _buildContent(context, meals),
       ),
     );
   }
@@ -205,12 +325,9 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.calendar_month_outlined,
-                  size: 48.sp,
-                  color: WeeklyReflectionController.backColor.withValues(
-                    alpha: 0.35,
-                  ),
+                AppSpotIllustration(
+                  kind: AppSpotIllustrationKind.weeklyReflectionEmpty,
+                  size: 120,
                 ),
                 SizedBox(height: 18.h),
                 Text(
@@ -284,28 +401,46 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle(WeeklyReflectionController.weeklySummaryTitle),
-        SizedBox(height: 16.h),
+        SizedBox(height: 12.h),
         if (_summaryLoading)
           _buildSummaryLoading()
-        else if (_summary != null) ...[
-          _buildSummarySubsection(
+        else if (_summary != null) _buildSummaryCard(_summary!),
+      ],
+    );
+  }
+
+  Widget _buildSummaryCard(WeeklyReflectionSummary summary) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 12.h),
+      decoration: BoxDecoration(
+        color: WeeklyReflectionController.summaryCardBg,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(
+          color: WeeklyReflectionController.cardBorder.withValues(alpha: 0.65),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSummaryBlock(
             title: WeeklyReflectionController.goodPatternsTitle,
-            items: _summary!.goodPatterns,
+            items: summary.goodPatterns,
           ),
-          SizedBox(height: 14.h),
-          _buildSummarySubsection(
+          SizedBox(height: 10.h),
+          _buildSummaryBlock(
             title: WeeklyReflectionController.smallFocusTitle,
-            items: _summary!.smallFocus,
+            items: summary.smallFocus,
           ),
         ],
-      ],
+      ),
     );
   }
 
   Widget _buildSummaryLoading() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 28.h),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 20.h),
       decoration: BoxDecoration(
         color: WeeklyReflectionController.summaryCardBg,
         borderRadius: BorderRadius.circular(16.r),
@@ -345,7 +480,7 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
     return Text(
       title,
       style: TextStyle(
-        fontSize: 13.sp,
+        fontSize: 15.sp,
         fontWeight: FontWeight.w700,
         color: WeeklyReflectionController.sectionTitleColor,
         letterSpacing: 0.25,
@@ -377,7 +512,7 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inriaSerif(
-              fontSize: 17.sp,
+              fontSize: 16.sp,
               fontWeight: FontWeight.w700,
               color: WeeklyReflectionController.titleColor,
               height: 1.25,
@@ -435,68 +570,57 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
     );
   }
 
-  Widget _buildSummarySubsection({
+  Widget _buildSummaryBlock({
     required String title,
     required List<String> items,
   }) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 14.h),
-      decoration: BoxDecoration(
-        color: WeeklyReflectionController.summaryCardBg,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: WeeklyReflectionController.cardBorder.withValues(alpha: 0.8),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: WeeklyReflectionController.backColor,
-              height: 1.2,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+            color: WeeklyReflectionController.backColor,
+            height: 1.2,
           ),
-          SizedBox(height: 10.h),
-          for (var i = 0; i < items.length; i++) ...[
-            if (i > 0) SizedBox(height: 8.h),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(top: 2.h, right: 8.w),
-                  child: Text(
-                    '•',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: WeeklyReflectionController.backColor.withValues(
-                        alpha: 0.65,
-                      ),
-                      height: 1.4,
+        ),
+        SizedBox(height: 6.h),
+        for (var i = 0; i < items.length; i++) ...[
+          if (i > 0) SizedBox(height: 4.h),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(top: 1.h, right: 6.w),
+                child: Text(
+                  '•',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: WeeklyReflectionController.backColor.withValues(
+                      alpha: 0.55,
                     ),
+                    height: 1.35,
                   ),
                 ),
-                Expanded(
-                  child: Text(
-                    items[i],
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w400,
-                      color: WeeklyReflectionController.titleColor,
-                      height: 1.45,
-                    ),
+              ),
+              Expanded(
+                child: Text(
+                  items[i],
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w400,
+                    color: WeeklyReflectionController.titleColor,
+                    height: 1.35,
                   ),
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ],
-      ),
+      ],
     );
   }
 }

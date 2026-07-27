@@ -249,7 +249,7 @@ class _ScoreHeroCard extends StatelessWidget {
               children: [
                 Text(
                   '${result.displayOverallScore}',
-                  style: GoogleFonts.inriaSerif(
+                  style: TextStyle(
                     fontSize: 42.sp,
                     fontWeight: FontWeight.w700,
                     color: Colors.white.withValues(alpha: 0.9),
@@ -272,11 +272,12 @@ class _ScoreHeroCard extends StatelessWidget {
           Text(
             result.mealName,
             textAlign: TextAlign.center,
-            style: GoogleFonts.inriaSerif(
+            style: TextStyle(
               fontSize: 22.sp,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               color: Colors.white,
               height: 1.2,
+              letterSpacing: 0.15,
             ),
           ),
         ],
@@ -285,7 +286,7 @@ class _ScoreHeroCard extends StatelessWidget {
   }
 }
 
-class _DimensionCard extends StatelessWidget {
+class _DimensionCard extends StatefulWidget {
   const _DimensionCard({
     required this.template,
     required this.dimension,
@@ -295,57 +296,98 @@ class _DimensionCard extends StatelessWidget {
   final ResultDimension dimension;
 
   @override
-  Widget build(BuildContext context) {
-    final barColor = ResultPageController.scoreColor(dimension.score);
+  State<_DimensionCard> createState() => _DimensionCardState();
+}
 
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 12.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(ResultPageController.cardRadius.r),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+class _DimensionCardState extends State<_DimensionCard> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final dimension = widget.dimension;
+    final template = widget.template;
+    final barColor = ResultPageController.scoreColor(dimension.score);
+    final description = dimension.description.trim();
+    final hasDetails = description.isNotEmpty;
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(ResultPageController.cardRadius.r),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: hasDetails ? () => setState(() => _expanded = !_expanded) : null,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(14.w, 9.h, 14.w, 9.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(template.emoji, style: TextStyle(fontSize: 18.sp)),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Text(
-                  template.name,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: ResultPageController.cardTitle,
+              Row(
+                children: [
+                  Text(template.emoji, style: TextStyle(fontSize: 20.sp)),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      template.name,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: ResultPageController.cardTitle,
+                      ),
+                    ),
                   ),
+                ],
+              ),
+              SizedBox(height: 8.h),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(100.r),
+                child: LinearProgressIndicator(
+                  value: dimension.progress,
+                  minHeight: 7.h,
+                  backgroundColor: const Color(0xFFD9D9D9),
+                  color: barColor,
                 ),
               ),
+              if (_expanded && hasDetails) ...[
+                SizedBox(height: 8.h),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w400,
+                    color: ResultPageController.cardBody,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+              if (hasDetails) ...[
+                SizedBox(height: 6.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      _expanded
+                          ? ResultPageController.dimensionDetailsHide
+                          : ResultPageController.dimensionDetailsShow,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: ResultPageController.scoreExplanationLinkColor,
+                      ),
+                    ),
+                    Icon(
+                      _expanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      size: 18.sp,
+                      color: ResultPageController.scoreExplanationLinkColor,
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
-          SizedBox(height: 10.h),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(100.r),
-            child: LinearProgressIndicator(
-              value: dimension.progress,
-              minHeight: 9.h,
-              backgroundColor: const Color(0xFFD9D9D9),
-              color: barColor,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            dimension.description,
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w400,
-              color: ResultPageController.cardBody,
-              height: 1.35,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -469,9 +511,9 @@ class _InsightHeroCard extends StatelessWidget {
                 SizedBox(height: 4.h),
                 Text(
                   result.mealName,
-                  style: GoogleFonts.inriaSerif(
+                  style: TextStyle(
                     fontSize: 17.sp,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: Colors.white,
                     height: 1.2,
                   ),
@@ -481,7 +523,7 @@ class _InsightHeroCard extends StatelessWidget {
           ),
           Text(
             '${result.displayOverallScore}',
-            style: GoogleFonts.inriaSerif(
+            style: TextStyle(
               fontSize: 34.sp,
               fontWeight: FontWeight.w700,
               color: ResultPageController.scoreAccent,
@@ -532,11 +574,12 @@ class _InsightCard extends StatelessWidget {
               children: [
                 Text(
                   item.title,
-                  style: GoogleFonts.inriaSerif(
+                  style: TextStyle(
                     fontSize: ResultPageController.insightCardTitleFontSize.sp,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: ResultPageController.cardTitle,
                     height: 1.25,
+                    letterSpacing: 0.1,
                   ),
                 ),
                 SizedBox(height: 4.h),
@@ -587,14 +630,13 @@ class _TipsTab extends StatelessWidget {
           ),
           SizedBox(height: 12.h),
           _TipsHeroCard(body: tips),
-          SizedBox(height: 20.h),
-          _DisclaimerBox(
-            prefix: ResultPageController.rememberPrefix,
+          SizedBox(height: 16.h),
+          _TipsDisclaimerText(
             text: result.disclaimer.isNotEmpty
                 ? result.disclaimer
                 : ResultPageController.tipsDisclaimer,
           ),
-          SizedBox(height: 20.h),
+          SizedBox(height: 18.h),
           Center(
             child: OutlinedButton(
               onPressed: () => Navigator.of(context).popUntil(
@@ -609,7 +651,7 @@ class _TipsTab extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15.r),
                 ),
-                backgroundColor: Colors.white.withValues(alpha: 0.54),
+                backgroundColor: Colors.white,
                 foregroundColor: ResultPageController.gotItText,
               ),
               child: Text(
@@ -639,58 +681,61 @@ class _TipsHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 16.h),
+      padding: EdgeInsets.fromLTRB(12.w, 12.h, 14.w, 12.h),
       decoration: BoxDecoration(
-        color: ResultPageController.heroGreenSolid.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(ResultPageController.heroRadius.r),
-      ),
-      child: Text(
-        body,
-        style: TextStyle(
-          fontSize: 15.sp,
-          fontWeight: FontWeight.w400,
-          color: Colors.white.withValues(alpha: 0.95),
-          height: 1.45,
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(
+          ResultPageController.insightCardRadius.r,
         ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.lightbulb_outline_rounded,
+            size: 22.sp,
+            color: ResultPageController.scoreBarGood,
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Text(
+              body,
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w400,
+                color: ResultPageController.cardTitle,
+                height: 1.45,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _DisclaimerBox extends StatelessWidget {
-  const _DisclaimerBox({
-    required this.prefix,
-    required this.text,
-  });
+class _TipsDisclaimerText extends StatelessWidget {
+  const _TipsDisclaimerText({required this.text});
 
-  final String prefix;
   final String text;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 14.h),
-      decoration: BoxDecoration(
-        color: ResultPageController.disclaimerBg,
-        borderRadius: BorderRadius.circular(ResultPageController.cardRadius.r),
-      ),
-      child: RichText(
-        text: TextSpan(
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w400,
-            color: ResultPageController.disclaimerText,
-            height: 1.45,
-          ),
-          children: [
-            TextSpan(
-              text: '$prefix ',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            TextSpan(text: text),
-          ],
+    return Text.rich(
+      TextSpan(
+        style: TextStyle(
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w400,
+          color: ResultPageController.scoreExplanationFooterColor,
+          height: 1.45,
         ),
+        children: [
+          TextSpan(
+            text: ResultPageController.rememberPrefix,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          TextSpan(text: ' $text'),
+        ],
       ),
     );
   }
@@ -842,16 +887,6 @@ class _ScoreExplanationSheet extends StatelessWidget {
                       _ScoreExplanationDimensionCard(item: item),
                       SizedBox(height: 12.h),
                     ],
-                    SizedBox(height: 8.h),
-                    Text(
-                      ResultPageController.scoreExplanationSupportiveNote,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w400,
-                        color: ResultPageController.cardBody,
-                        height: 1.45,
-                      ),
-                    ),
                     SizedBox(height: 16.h),
                     Text(
                       ResultPageController.scoreExplanationFooterDisclaimer,

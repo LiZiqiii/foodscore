@@ -5,10 +5,19 @@ import 'food_score_home_page.dart';
 import 'forgot_password_page.dart';
 import 'login_page_controller.dart';
 import 'sign_up_page.dart';
+import 'sign_up_page_controller.dart';
+import '../services/auth_service.dart';
+import '../services/auth_service_factory.dart';
+import '../services/auth_session.dart';
+import '../widgets/app_spot_illustration.dart';
+import '../widgets/auth_form_text_field.dart';
 
 /// FoodScore 登录页。
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({super.key, this.registrationSuccess = false});
+
+  /// 从注册页跳转过来时为 true，用于显示成功提示。
+  final bool registrationSuccess;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -16,6 +25,132 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
+  bool _isSubmitting = false;
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  String? _usernameError;
+  String? _passwordError;
+  String? _formError;
+
+  bool _showRegistrationBanner = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _usernameController.addListener(_clearUsernameError);
+    _passwordController.addListener(_clearPasswordError);
+    _showRegistrationBanner = widget.registrationSuccess;
+  }
+
+  void _dismissRegistrationBanner() {
+    if (!_showRegistrationBanner) {
+      return;
+    }
+    setState(() => _showRegistrationBanner = false);
+  }
+
+  void _clearUsernameError() {
+    if (_usernameError == null && _formError == null) {
+      return;
+    }
+    setState(() {
+      _usernameError = null;
+      _formError = null;
+    });
+  }
+
+  void _clearPasswordError() {
+    if (_passwordError == null && _formError == null) {
+      return;
+    }
+    setState(() {
+      _passwordError = null;
+      _formError = null;
+    });
+  }
+
+  @override
+  void dispose() {
+    _usernameController.removeListener(_clearUsernameError);
+    _passwordController.removeListener(_clearPasswordError);
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  String? _validateUsername(String username) {
+    if (username.isEmpty) {
+      return LoginPageController.emptyUsernameMessage;
+    }
+    if (!LoginPageController.isValidUsername(username)) {
+      return LoginPageController.invalidUsernameMessage;
+    }
+    return null;
+  }
+
+  String? _validatePassword(String password) {
+    if (password.isEmpty) {
+      return LoginPageController.emptyPasswordMessage;
+    }
+    return null;
+  }
+
+  Future<void> _submitLogin() async {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+    final usernameError = _validateUsername(username);
+    final passwordError = _validatePassword(password);
+
+    setState(() {
+      _usernameError = usernameError;
+      _passwordError = passwordError;
+      _formError = null;
+    });
+
+    if (usernameError != null || passwordError != null) {
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final user = await createAuthService().login(
+        username: username,
+        password: password,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      AuthSession.instance.setUser(user);
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => const FoodScoreHomePage(),
+        ),
+      );
+    } on AuthServiceException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isSubmitting = false;
+        if (error.statusCode == 401) {
+          _passwordError = LoginPageController.invalidLoginMessage;
+        } else {
+          _formError = LoginPageController.requestFailedMessage;
+        }
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isSubmitting = false;
+        _formError = LoginPageController.requestFailedMessage;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +189,10 @@ class _LoginPageState extends State<LoginPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SizedBox(height: LoginPageController.topInset.h),
+                          if (_showRegistrationBanner) ...[
+                            _buildRegistrationSuccessBanner(),
+                            SizedBox(height: 16.h),
+                          ],
                           _buildTitleSection(),
                           SizedBox(
                             height: LoginPageController.titleToFormGap.h,
@@ -67,6 +206,46 @@ class _LoginPageState extends State<LoginPage> {
                 );
               },
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRegistrationSuccessBanner() {
+    return Material(
+      color: LoginPageController.bgMid,
+      borderRadius: BorderRadius.circular(14.r),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: _dismissRegistrationBanner,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(12.w, 12.h, 10.w, 12.h),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              AppSpotIllustration(
+                kind: AppSpotIllustrationKind.registrationSuccess,
+                size: 56,
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Text(
+                  SignUpPageController.registrationSuccessMessage,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: LoginPageController.titleGreetingColor,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.close_rounded,
+                size: 20.sp,
+                color: LoginPageController.taglineColor,
+              ),
+            ],
           ),
         ),
       ),
@@ -172,26 +351,51 @@ class _LoginPageState extends State<LoginPage> {
         width: formWidth,
         child: Column(
           children: [
-            _buildInputField(hint: LoginPageController.emailHint),
+            _buildValidatedField(
+              errorText: _usernameError,
+              field: _buildInputField(
+                hint: LoginPageController.usernameHint,
+                controller: _usernameController,
+                hasError: _usernameError != null,
+              ),
+            ),
             SizedBox(height: LoginPageController.inputGap.h),
-            _buildInputField(
-              hint: LoginPageController.passwordHint,
-              obscureText: _obscurePassword,
-              suffixIcon: IconButton(
-                onPressed: () {
-                  setState(() => _obscurePassword = !_obscurePassword);
-                },
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints(minWidth: 32.w, minHeight: 32.w),
-                icon: Icon(
-                  _obscurePassword
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                  size: 20.sp,
-                  color: LoginPageController.hintColor,
+            _buildValidatedField(
+              errorText: _passwordError,
+              field: _buildInputField(
+                hint: LoginPageController.passwordHint,
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                hasError: _passwordError != null,
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    setState(() => _obscurePassword = !_obscurePassword);
+                  },
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints(minWidth: 32.w, minHeight: 32.w),
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    size: 20.sp,
+                    color: LoginPageController.hintColor,
+                  ),
                 ),
               ),
             ),
+            if (_formError != null) ...[
+              SizedBox(height: LoginPageController.fieldErrorGap.h),
+              Text(
+                _formError!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: LoginPageController.errorFontSize.sp,
+                  fontWeight: FontWeight.w400,
+                  color: LoginPageController.errorTextColor,
+                  height: 1.3,
+                ),
+              ),
+            ],
             SizedBox(height: LoginPageController.formToButtonGap.h),
             _buildLoginButton(context),
             SizedBox(height: LoginPageController.buttonToForgetGap.h),
@@ -204,59 +408,53 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  Widget _buildValidatedField({
+    required Widget field,
+    required String? errorText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        field,
+        if (errorText != null) ...[
+          SizedBox(height: LoginPageController.fieldErrorGap.h),
+          Text(
+            errorText,
+            style: TextStyle(
+              fontSize: LoginPageController.errorFontSize.sp,
+              fontWeight: FontWeight.w400,
+              color: LoginPageController.errorTextColor,
+              height: 1.3,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   Widget _buildInputField({
     required String hint,
     bool obscureText = false,
+    bool hasError = false,
+    TextEditingController? controller,
     Widget? suffixIcon,
   }) {
-    final borderRadius = BorderRadius.circular(
-      LoginPageController.inputBorderRadius.r,
-    );
-
-    return Container(
-      height: LoginPageController.inputHeight.h,
-      decoration: BoxDecoration(
-        color: LoginPageController.inputBackgroundColor,
-        borderRadius: borderRadius,
-        border: Border.all(
-          color: LoginPageController.inputBorderColor,
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1A6731).withValues(alpha: 0.04),
-            blurRadius: 6.r,
-            offset: Offset(0, 2.h),
-          ),
-        ],
-      ),
-      alignment: Alignment.center,
-      padding: EdgeInsets.only(left: 16.w, right: suffixIcon == null ? 16.w : 4.w),
-      child: TextField(
-        obscureText: obscureText,
-        textAlignVertical: TextAlignVertical.center,
-        style: TextStyle(
-          fontSize: LoginPageController.inputFontSize.sp,
-          fontWeight: FontWeight.w500,
-          color: LoginPageController.inputTextColor,
-          height: 1.0,
-        ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(
-            fontSize: LoginPageController.hintFontSize.sp,
-            fontWeight: FontWeight.w400,
-            color: LoginPageController.hintColor,
-            height: 1.0,
-          ),
-          isCollapsed: true,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
-          suffixIcon: suffixIcon,
-        ),
-      ),
+    return AuthFormTextField(
+      height: LoginPageController.inputHeight,
+      hint: hint,
+      controller: controller,
+      obscureText: obscureText,
+      enabled: !_isSubmitting,
+      hasError: hasError,
+      suffixIcon: suffixIcon,
+      backgroundColor: LoginPageController.inputBackgroundColor,
+      borderColor: LoginPageController.inputBorderColor,
+      errorBorderColor: LoginPageController.inputErrorBorderColor,
+      textColor: LoginPageController.inputTextColor,
+      hintColor: LoginPageController.hintColor,
+      fontSize: LoginPageController.inputFontSize,
+      hintFontSize: LoginPageController.hintFontSize,
+      borderRadius: LoginPageController.inputBorderRadius,
     );
   }
 
@@ -267,19 +465,15 @@ class _LoginPageState extends State<LoginPage> {
 
     return Center(
       child: Material(
-        color: LoginPageController.buttonColor,
+        color: _isSubmitting
+            ? LoginPageController.buttonColor.withValues(alpha: 0.7)
+            : LoginPageController.buttonColor,
         elevation: LoginPageController.buttonElevation,
         shadowColor: const Color(0xFF4A9E68).withValues(alpha: 0.35),
         borderRadius: borderRadius,
         clipBehavior: Clip.none,
         child: InkWell(
-          onTap: () {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute<void>(
-                builder: (_) => const FoodScoreHomePage(),
-              ),
-            );
-          },
+          onTap: _isSubmitting ? null : _submitLogin,
           borderRadius: borderRadius,
           splashColor: Colors.white.withValues(alpha: 0.28),
           highlightColor: Colors.white.withValues(alpha: 0.14),
@@ -287,15 +481,24 @@ class _LoginPageState extends State<LoginPage> {
             width: LoginPageController.buttonWidth.w,
             height: LoginPageController.buttonHeight.h,
             child: Center(
-              child: Text(
-                LoginPageController.loginButton,
-                style: TextStyle(
-                  fontSize: LoginPageController.buttonFontSize.sp,
-                  fontWeight: FontWeight.w700,
-                  color: LoginPageController.buttonTextColor,
-                  letterSpacing: 0.3,
-                ),
-              ),
+              child: _isSubmitting
+                  ? SizedBox(
+                      width: 22.w,
+                      height: 22.w,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        color: LoginPageController.buttonTextColor,
+                      ),
+                    )
+                  : Text(
+                      LoginPageController.loginButton,
+                      style: TextStyle(
+                        fontSize: LoginPageController.buttonFontSize.sp,
+                        fontWeight: FontWeight.w700,
+                        color: LoginPageController.buttonTextColor,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
             ),
           ),
         ),

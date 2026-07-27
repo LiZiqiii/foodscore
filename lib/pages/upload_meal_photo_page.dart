@@ -7,8 +7,10 @@ import 'package:image_picker/image_picker.dart';
 
 import 'meal_analysis_loading_page.dart';
 import '../config/page_layout.dart';
+import '../widgets/meal_feedback_disclaimer.dart';
 import '../widgets/meal_feedback_mode_selector.dart';
 import '../widgets/page_back_button.dart';
+import 'describe_meal_page_controller.dart';
 import 'upload_meal_photo_controller.dart';
 /// 上传餐食照片页面。
 class UploadMealPhotoPage extends StatefulWidget {
@@ -45,65 +47,66 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
     return Scaffold(
       backgroundColor: UploadMealPhotoController.backgroundColor,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: _buildContent(context),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: UploadMealPhotoController.horizontalPadding.w,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: _buildScrollContent(context),
+                ),
               ),
-            );
-          },
+              const MealFeedbackDisclaimerFooter(
+                style: MealFeedbackDisclaimerStyle.compact,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: UploadMealPhotoController.horizontalPadding.w,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: PageLayout.topExtraPadding.h),
-          const PageBackButton(),
-          SizedBox(height: PageLayout.backToTitleGap.h),
-          _buildTitleSection(),
-          SizedBox(height: UploadMealPhotoController.subtitleToUploadGap.h),
-          _buildUploadArea(),
-          SizedBox(height: 24.h),
-          Text(
-            UploadMealPhotoController.descriptionLabel,
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: UploadMealPhotoController.descriptionLabelColor,
-              height: 1.2,
-            ),
+  Widget _buildScrollContent(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: PageLayout.topExtraPadding.h),
+        const PageBackButton(),
+        SizedBox(height: PageLayout.backToTitleGap.h),
+        _buildTitleSection(),
+        SizedBox(height: UploadMealPhotoController.subtitleToUploadGap.h),
+        _buildUploadArea(),
+        SizedBox(height: 24.h),
+        Text(
+          UploadMealPhotoController.descriptionLabel,
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w600,
+            color: UploadMealPhotoController.descriptionLabelColor,
+            height: 1.2,
           ),
-          SizedBox(
-            height: UploadMealPhotoController.descriptionLabelToOptionalGap.h,
+        ),
+        SizedBox(
+          height: UploadMealPhotoController.descriptionLabelToOptionalGap.h,
+        ),
+        Text(
+          UploadMealPhotoController.descriptionOptional,
+          style: TextStyle(
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w400,
+            color: UploadMealPhotoController.descriptionOptionalColor,
+            height: 1.2,
           ),
-          Text(
-            UploadMealPhotoController.descriptionOptional,
-            style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w400,
-              color: UploadMealPhotoController.descriptionOptionalColor,
-              height: 1.2,
-            ),
-          ),
-          SizedBox(height: UploadMealPhotoController.optionalToInputGap.h),
-          _buildDescriptionField(),
-          SizedBox(height: UploadMealPhotoController.descriptionToCtaGap.h),
-          _buildCtaButton(context),
-          SizedBox(height: UploadMealPhotoController.ctaToDisclaimerGap.h),
-          _buildDisclaimer(),
-          SizedBox(height: UploadMealPhotoController.disclaimerBottomPadding.h),
-        ],
-      ),
+        ),
+        SizedBox(height: UploadMealPhotoController.optionalToInputGap.h),
+        _buildDescriptionField(),
+        SizedBox(height: UploadMealPhotoController.descriptionToCtaGap.h),
+        _buildCtaButton(context),
+        SizedBox(height: 16.h),
+      ],
     );
   }
 
@@ -220,18 +223,10 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
   }
   Widget _buildDescriptionField() {
     final radius = BorderRadius.only(
-      topLeft: Radius.circular(
-        UploadMealPhotoController.descriptionInputRadiusTL.r,
-      ),
-      topRight: Radius.circular(
-        UploadMealPhotoController.descriptionInputRadiusTR.r,
-      ),
-      bottomLeft: Radius.circular(
-        UploadMealPhotoController.descriptionInputRadiusBL.r,
-      ),
-      bottomRight: Radius.circular(
-        UploadMealPhotoController.descriptionInputRadiusBR.r,
-      ),
+      topLeft: Radius.circular(DescribeMealPageController.inputRadiusTL.r),
+      topRight: Radius.circular(DescribeMealPageController.inputRadiusTR.r),
+      bottomLeft: Radius.circular(DescribeMealPageController.inputRadiusBL.r),
+      bottomRight: Radius.circular(DescribeMealPageController.inputRadiusBR.r),
     );
 
     return NotificationListener<OverscrollIndicatorNotification>(
@@ -253,41 +248,43 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
         style: TextStyle(
           fontSize: UploadMealPhotoController.descriptionInputFontSize.sp,
           fontWeight: FontWeight.w400,
-          color: UploadMealPhotoController.descriptionTextColor,
-          height: UploadMealPhotoController.descriptionInputLineHeight,
+          color: DescribeMealPageController.inputTextColor,
+          height: DescribeMealPageController.inputLineHeight,
         ),
         decoration: InputDecoration(
           hintText: UploadMealPhotoController.descriptionHint,
           hintStyle: TextStyle(
             fontSize: UploadMealPhotoController.descriptionInputFontSize.sp,
             fontWeight: FontWeight.w400,
-            color: UploadMealPhotoController.descriptionHintColor,
-            height: UploadMealPhotoController.descriptionInputLineHeight,
+            color: DescribeMealPageController.inputHintColor,
+            height: DescribeMealPageController.inputLineHeight,
           ),
           filled: true,
-          fillColor: UploadMealPhotoController.descriptionInputBg,
+          fillColor: DescribeMealPageController.inputBg,
           contentPadding: EdgeInsets.symmetric(
-            horizontal: UploadMealPhotoController.descriptionInputPaddingH.w,
-            vertical: UploadMealPhotoController.descriptionInputPaddingV.h,
+            horizontal: DescribeMealPageController.inputPaddingH.w,
+            vertical: DescribeMealPageController.inputPaddingV.h,
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: radius,
             borderSide: const BorderSide(
-              color: UploadMealPhotoController.descriptionInputBorder,
+              color: DescribeMealPageController.inputBorderColor,
               width: 1,
             ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: radius,
             borderSide: BorderSide(
-              color: UploadMealPhotoController.backColor.withValues(alpha: 0.35),
+              color: DescribeMealPageController.backColor.withValues(
+                alpha: 0.35,
+              ),
               width: 1,
             ),
           ),
           border: OutlineInputBorder(
             borderRadius: radius,
             borderSide: const BorderSide(
-              color: UploadMealPhotoController.descriptionInputBorder,
+              color: DescribeMealPageController.inputBorderColor,
               width: 1,
             ),
           ),
@@ -327,6 +324,7 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
                       MaterialPageRoute<void>(
                         builder: (_) => MealAnalysisLoadingPage(
                           imagePath: _selectedImage!.path,
+                          imageFile: _selectedImage,
                           description:
                               _descriptionController.text.trim().isEmpty
                               ? null
@@ -339,10 +337,11 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
                     final description = _descriptionController.text.trim();
                     saveMealForWeeklyReflection(
                       context,
-                      summary: description.isEmpty
-                          ? 'Meal photo'
-                          : description,
-                      isPhoto: true,
+                      imagePath: _selectedImage!.path,
+                      imageFile: _selectedImage,
+                      description:
+                          description.isEmpty ? null : description,
+                      mealText: description.isEmpty ? null : description,
                     );
                   },
                 );
@@ -374,22 +373,6 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDisclaimer() {
-    return Center(
-      child: Text(
-        '${UploadMealPhotoController.disclaimerLine1}\n'
-        '${UploadMealPhotoController.disclaimerLine2}',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 12.sp,
-          fontWeight: FontWeight.w400,
-          color: UploadMealPhotoController.disclaimerColor,
-          height: 1.4,
         ),
       ),
     );

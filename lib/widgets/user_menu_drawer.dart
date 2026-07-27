@@ -1,8 +1,9 @@
 import 'package:ducafe_ui_core/ducafe_ui_core.dart';
 import 'package:flutter/material.dart';
 
+import '../pages/coaching_profile_page.dart';
 import '../pages/login_page.dart';
-
+import '../services/auth_session.dart';
 /// Home 页右侧用户菜单。
 class UserMenuDrawer extends StatelessWidget {
   const UserMenuDrawer({super.key});
@@ -11,6 +12,9 @@ class UserMenuDrawer extends StatelessWidget {
   static const Color titleColor = Color(0xFF4A4B48);
   static const Color subtitleColor = Color(0xFF878984);
   static const Color logoutColor = Color(0xFF1A6731);
+
+  String get _displayName =>
+      AuthSession.instance.currentUser?.username ?? 'Account';
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +50,9 @@ class UserMenuDrawer extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Account',
+                            _displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w600,
@@ -67,11 +73,51 @@ class UserMenuDrawer extends StatelessWidget {
                     ),
                   ],
                 ),
+                SizedBox(height: 24.h),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const CoachingProfilePage(),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(12.r),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 4.w,
+                        vertical: 12.h,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.edit_note_outlined,
+                            size: 20.sp,
+                            color: logoutColor,
+                          ),
+                          SizedBox(width: 10.w),
+                          Text(
+                            'Coaching Profile',
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                              color: logoutColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                 const Spacer(),
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () {
+                      AuthSession.instance.clear();
                       Navigator.of(context).pop();
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute<void>(

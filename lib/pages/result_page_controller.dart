@@ -24,6 +24,8 @@ class ResultPageController {
   static const String foodQualityScoreLabel = 'FOOD QUALITY SCORE';
   static const String outOf100Label = 'OUT OF 100';
   static const String scoreBreakdownTitle = 'SCORE BREAKDOWN';
+  static const String dimensionDetailsShow = 'Details';
+  static const String dimensionDetailsHide = 'Hide';
   static const String analysedMealLabel = 'ANALYSED MEAL';
   static const String doesWellSectionTitle = 'WHAT THIS MEAL DOES WELL';
   static const String concernSectionTitle = 'AREAS OF CONCERN';
@@ -52,9 +54,7 @@ class ResultPageController {
   static const String scoreExplanationSubtitle =
       'FoodScore estimates meal quality using four simple dimensions.';
   static const String scoreExplanationIntro =
-      'The overall score is based on the meal information provided, such as the photo and any optional text details. At this prototype stage, each dimension contributes in a similar way to the final score.';
-  static const String scoreExplanationSupportiveNote =
-      'FoodScore highlights both strengths and small areas to improve. It is not designed to judge a single meal as simply “good” or “bad”.';
+      'The overall score is based on the meal information provided, such as the photo and any optional text details.';
   static const String scoreExplanationFooterDisclaimer =
       'This score is an approximate food quality indicator, not a precise nutrient calculation or medical advice.';
   static const List<ScoreExplanationDimension> scoreExplanationDimensions = [

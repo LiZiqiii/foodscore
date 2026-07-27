@@ -12,12 +12,37 @@ class LoginPageController {
   static const String appTitle = 'FoodScore';
   static const String tagline =
       'Upload a photo or describe your meal for supportive food quality feedback.';
-  static const String emailHint = 'E-mail';
+  static const String usernameHint = 'Username';
   static const String passwordHint = 'Password';
   static const String loginButton = 'Log in';
   static const String forgetPassword = 'Forgot password?';
   static const String noAccountPrefix = 'Don\'t have an account? ';
   static const String signUp = 'Sign up';
+
+  static const int minPasswordLength = 8;
+  static const int maxUsernameLength = 50;
+
+  static const String emptyUsernameMessage = 'Please enter a username.';
+  static const String invalidUsernameMessage =
+      'Username must be 1–50 characters.';
+  static const String emptyPasswordMessage = 'Please enter a password.';
+  static const String invalidLoginMessage = 'Invalid username or password.';
+  static const String requestFailedMessage =
+      'Could not reach the server. Please try again.';
+
+  static const Color inputErrorBorderColor = Color(0xFFE57373);
+  static const Color errorTextColor = Color(0xFFC62828);
+  static const double errorFontSize = 12;
+  static const double fieldErrorGap = 6;
+
+  static bool isValidUsername(String username) {
+    final trimmed = username.trim();
+    return trimmed.isNotEmpty && trimmed.length <= maxUsernameLength;
+  }
+
+  static bool isValidPassword(String password) {
+    return password.isNotEmpty;
+  }
 
   // ---------------------------------------------------------------------------
   // 背景色 — 白 → 浅薄荷绿，干净无灰块
@@ -72,7 +97,7 @@ class LoginPageController {
   static const double forgetToSignUpGap = 18;
 
   static const double formWidthRatio = 0.8;
-  static const double inputHeight = 46;
+  static const double inputHeight = 40;
   static const double inputBorderRadius = 12;
   static const double buttonWidth = 230;
   static const double buttonHeight = 50;

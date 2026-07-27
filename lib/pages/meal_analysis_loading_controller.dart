@@ -5,16 +5,10 @@ class MealAnalysisLoadingController {
   MealAnalysisLoadingController._();
 
   static const String title = 'Analysing your meal...';
-  static const String subtitle =
-      'We\'re checking balance, variety, food quality and processing level.';
   static const String hint = 'This only takes a few seconds.';
-
-  static const List<String> analysisSteps = [
-    'Meal Balance',
-    'Food Variety',
-    'Whole Food Quality',
-    'Processing Level',
-  ];
+  static const String reflectionSaveTitle = 'Saving your meal...';
+  static const String reflectionSavedMessage =
+      'Meal saved for your weekly reflection.';
 
   // 颜色
   static const Color backgroundStart = Color(0xFFF6FAF0);
@@ -27,8 +21,6 @@ class MealAnalysisLoadingController {
   static const Color ringTrackColor = Color(0x331A6731);
   static const Color ringActiveColor = Color(0xFF1A6731);
   static const Color iconColor = Color(0xFF0F6B35);
-  static const Color stepChipBg = Color(0xFFE1F4F0);
-  static const Color stepChipText = Color(0xFF2E5E35);
 
   // 尺寸
   static const double horizontalPadding = 28;
@@ -41,10 +33,6 @@ class MealAnalysisLoadingController {
   static const double titleFontSize = 18;
   static const double subtitleFontSize = 14;
   static const double hintFontSize = 13;
-  static const double stepFontSize = 12;
-  static const double cardToStepsGap = 22;
-  static const double stepChipHeight = 28;
-  static const Duration stepHighlightInterval = Duration(milliseconds: 1400);
 
   // 分析失败时的文案与按钮（不改变 Loading 主视觉，仅在出错时显示）
   static const String errorTitle = 'Analysis failed';

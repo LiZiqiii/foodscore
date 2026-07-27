@@ -51,9 +51,9 @@ class UploadMealPhotoController {
   static const double uploadAreaRadius = 12;
   static const double descriptionLabelToOptionalGap = 9;
   static const double optionalToInputGap = 7;
-  static const double descriptionInputHeight = 88;
+  static const double descriptionInputHeight = 99;
   static const double descriptionInputPaddingH = 14;
-  static const double descriptionInputPaddingV = 10;
+  static const double descriptionInputPaddingV = 12;
   static const double descriptionInputFontSize = 14;
   static const double descriptionInputLineHeight = 25 / 14;
   static const double descriptionInputRadiusTL = 16;

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'describe_meal_page_controller.dart';
 import '../config/page_layout.dart';
+import '../widgets/meal_feedback_disclaimer.dart';
 import '../widgets/meal_feedback_mode_selector.dart';
 import '../widgets/page_back_button.dart';
 import 'meal_analysis_loading_page.dart';
@@ -65,17 +66,12 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
                         height: DescribeMealPageController.tipsToCtaGap.h,
                       ),
                       _buildCtaButton(context),
-                      SizedBox(
-                        height: DescribeMealPageController.ctaToDisclaimerGap.h,
-                      ),
-                      _buildDisclaimer(),
-                      SizedBox(
-                        height:
-                            DescribeMealPageController.disclaimerBottomPadding.h,
-                      ),
                     ],
                   ),
                 ),
+              ),
+              const MealFeedbackDisclaimerFooter(
+                style: MealFeedbackDisclaimerStyle.compact,
               ),
             ],
           ),
@@ -363,7 +359,7 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
                   },
                   onWeeklyReflection: () => saveMealForWeeklyReflection(
                     context,
-                    summary: _controller.text.trim(),
+                    mealText: _controller.text.trim(),
                   ),
                 );
               }
@@ -396,22 +392,6 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
             ),
           ),
         ),
-    );
-  }
-
-  Widget _buildDisclaimer() {
-    return Center(
-      child: Text(
-        '${DescribeMealPageController.disclaimerLine1}\n'
-        '${DescribeMealPageController.disclaimerLine2}',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 12.sp,
-          fontWeight: FontWeight.w400,
-          color: DescribeMealPageController.disclaimerColor,
-          height: 1.4,
-        ),
-      ),
     );
   }
 }

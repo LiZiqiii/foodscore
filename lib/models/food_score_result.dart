@@ -26,6 +26,14 @@ class FoodScoreDimension {
   final String label;
   final String feedback;
 
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'description': description,
+        'score': score,
+        'label': label,
+        'feedback': feedback,
+      };
+
   double get progress => score.clamp(0, 10) / 10;
   String get scoreText => '$score/10';
 }
@@ -164,4 +172,20 @@ class FoodScoreResult {
 
   /// Score / Overview 页展示用总分（0–100）。
   int get displayOverallScore => overallScore;
+
+  /// Serialises for FastAPI `/meal-records` and related endpoints.
+  Map<String, dynamic> toJson() => {
+        'mealName': mealName,
+        'overallScore': overallScore,
+        'overallLabel': overallLabel,
+        'summary': summary,
+        'dimensions': dimensions.map((dimension) => dimension.toJson()).toList(),
+        'whatThisMealDoesWell':
+            whatThisMealDoesWell.map((item) => item.toJson()).toList(),
+        'whatCouldBeImproved':
+            whatCouldBeImproved.map((item) => item.toJson()).toList(),
+        'tips': tips,
+        'positiveNotes': positiveNotes,
+        'disclaimer': disclaimer,
+      };
 }

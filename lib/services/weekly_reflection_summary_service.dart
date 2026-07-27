@@ -14,6 +14,7 @@ class WeeklyReflectionSummaryException implements Exception {
 /// 根据最近餐食生成 Weekly Summary（Mock / 本地 FastAPI + GPT）。
 abstract class WeeklyReflectionSummaryService {
   Future<WeeklyReflectionSummary> buildSummary(
-    List<WeeklyReflectionMeal> meals,
-  );
+    List<WeeklyReflectionMeal> meals, {
+    String? userId,
+  });
 }

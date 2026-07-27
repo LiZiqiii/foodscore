@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'describe_meal_page.dart';
 import '../config/page_layout.dart';
+import '../widgets/meal_feedback_disclaimer.dart';
 import '../widgets/page_back_button.dart';
 import 'share_meal_page_controller.dart';
 import 'upload_meal_photo_page.dart';
@@ -17,34 +18,42 @@ class ShareMealPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: ShareMealPageController.backgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: _buildContent(context),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: ShareMealPageController.horizontalPadding.w,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: _buildScrollContent(context),
+                ),
+              ),
+              const MealFeedbackDisclaimerFooter(
+                style: MealFeedbackDisclaimerStyle.compact,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: ShareMealPageController.horizontalPadding.w,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: PageLayout.topExtraPadding.h),
-          const PageBackButton(),
-          SizedBox(height: PageLayout.backToTitleGap.h),
-          _buildTitleSection(),
-          SizedBox(height: ShareMealPageController.titleToCardsGap.h),
-          _buildPhotoCard(context),
-          SizedBox(height: ShareMealPageController.cardGap.h),
-          _buildTextCard(context),
-          SizedBox(height: 80.h),
-          _buildDisclaimer(),
-          SizedBox(height: 36.h),
-        ],
-      ),
+  Widget _buildScrollContent(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: PageLayout.topExtraPadding.h),
+        const PageBackButton(),
+        SizedBox(height: PageLayout.backToTitleGap.h),
+        _buildTitleSection(),
+        SizedBox(height: ShareMealPageController.titleToCardsGap.h),
+        _buildPhotoCard(context),
+        SizedBox(height: ShareMealPageController.cardGap.h),
+        _buildTextCard(context),
+        SizedBox(height: 16.h),
+      ],
     );
   }
 
@@ -254,22 +263,6 @@ class ShareMealPage extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDisclaimer() {
-    return Center(
-      child: Text(
-        '${ShareMealPageController.disclaimerLine1}\n'
-        '${ShareMealPageController.disclaimerLine2}',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 12.sp,
-          fontWeight: FontWeight.w400,
-          color: ShareMealPageController.disclaimerColor,
-          height: 1.4,
         ),
       ),
     );

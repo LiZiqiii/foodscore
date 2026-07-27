@@ -22,26 +22,36 @@ class LocalApiWeeklyReflectionSummaryService
 
   @override
   Future<WeeklyReflectionSummary> buildSummary(
-    List<WeeklyReflectionMeal> meals,
-  ) async {
+    List<WeeklyReflectionMeal> meals, {
+    String? userId,
+  }) async {
     if (meals.isEmpty) {
       return WeeklyReflectionSummary.empty;
     }
 
     final uri = Uri.parse('$baseUrl/weekly-summary');
-    final body = jsonEncode({
+    final payload = <String, dynamic>{
       'meals': meals
           .map(
             (meal) => {
               'mealName': meal.mealName,
+              'mealText': meal.mealText.trim().isNotEmpty
+                  ? meal.mealText.trim()
+                  : meal.summary.trim(),
               'summary': meal.summary,
               'tags': meal.tags,
               'status': meal.status,
               'dayLabel': WeeklyReflectionFormat.dayAndTime(meal.savedAt),
+              'isPhoto': meal.isPhoto,
             },
           )
           .toList(growable: false),
-    });
+    };
+    final trimmedUserId = userId?.trim();
+    if (trimmedUserId != null && trimmedUserId.isNotEmpty) {
+      payload['userId'] = trimmedUserId;
+    }
+    final body = jsonEncode(payload);
 
     try {
       final response = await _client

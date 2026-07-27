@@ -6,19 +6,27 @@ class ForgotPasswordPageController {
 
   static const String title = 'Forgot password?';
   static const String subtitle =
-      'Enter your e-mail and we\'ll send a reset link.';
-  static const String emailHint = 'E-mail';
-  static const String sendButton = 'Send reset link';
+      'Enter your username and new password.';
+  static const String usernameHint = 'Username';
+  static const String newPasswordHint = 'New password';
+  static const String resetButton = 'Reset password';
 
-  static const String successTitle = 'Check your inbox';
+  static const String successTitle = 'Password updated';
   static const String successMessage =
-      'If an account exists for that e-mail, a reset link is on its way.';
+      'Your password has been updated. You can log in with your new password.';
 
-  static const String emptyEmailMessage = 'Please enter your e-mail.';
-  static const String invalidEmailMessage = 'Please enter a valid e-mail.';
+  static const String emptyUsernameMessage = 'Please enter a username.';
+  static const String invalidUsernameMessage =
+      'Username must be 1–50 characters.';
+  static const String emptyPasswordMessage = 'Please enter a new password.';
+  static const String weakPasswordMessage =
+      'Password must be at least 8 characters.';
 
   static const String backToLoginPrefix = 'Remember your password? ';
   static const String logIn = 'Log in';
+
+  static const int minPasswordLength = 8;
+  static const int maxUsernameLength = 50;
 
   static const Color bgTop = Color(0xFFFFFFFF);
   static const Color bgMid = Color(0xFFF4FBF2);
@@ -53,17 +61,23 @@ class ForgotPasswordPageController {
 
   static const double titleToSubtitleGap = 10;
   static const double subtitleToFormGap = 22;
+  static const double inputGap = 12;
   static const double fieldErrorGap = 6;
   static const double formToButtonGap = 26;
   static const double buttonToFooterGap = 20;
 
-  static const double inputHeight = 46;
+  static const double inputHeight = 40;
   static const double inputBorderRadius = 12;
   static const double buttonHeight = 50;
   static const double buttonBorderRadius = 14;
   static const double buttonElevation = 4;
 
-  static bool isValidEmail(String email) {
-    return RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(email);
+  static bool isValidUsername(String username) {
+    final trimmed = username.trim();
+    return trimmed.isNotEmpty && trimmed.length <= maxUsernameLength;
+  }
+
+  static bool isValidPassword(String password) {
+    return password.length >= minPasswordLength;
   }
 }

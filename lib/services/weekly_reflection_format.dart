@@ -10,22 +10,8 @@ abstract final class WeeklyReflectionFormat {
     'Sunday',
   ];
 
-  /// 例如 `Monday · Lunch`。
+  /// 例如 `Monday`。
   static String dayAndTime(DateTime savedAt) {
-    final weekday = _weekdays[savedAt.weekday - 1];
-    return '$weekday · ${_mealSlot(savedAt.hour)}';
-  }
-
-  static String _mealSlot(int hour) {
-    if (hour >= 5 && hour < 11) {
-      return 'Breakfast';
-    }
-    if (hour >= 11 && hour < 15) {
-      return 'Lunch';
-    }
-    if (hour >= 17 && hour < 22) {
-      return 'Dinner';
-    }
-    return 'Snack';
+    return _weekdays[savedAt.weekday - 1];
   }
 }

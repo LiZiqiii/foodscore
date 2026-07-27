@@ -7,15 +7,19 @@ class WeeklyReflectionMeal {
     required this.savedAt,
     required this.tags,
     required this.status,
+    this.mealText = '',
     this.isPhoto = false,
   });
 
   final String id;
   final String mealName;
+  /// GPT / analysis one-line summary (shown on Records cards).
   final String summary;
   final DateTime savedAt;
   final List<String> tags;
   final String status;
+  /// Original text description or photo note from upload/describe flow.
+  final String mealText;
   final bool isPhoto;
 }
 

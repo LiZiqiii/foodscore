@@ -13,8 +13,9 @@ class MockWeeklyReflectionSummaryService
 
   @override
   Future<WeeklyReflectionSummary> buildSummary(
-    List<WeeklyReflectionMeal> meals,
-  ) async {
+    List<WeeklyReflectionMeal> meals, {
+    String? userId,
+  }) async {
     if (meals.isEmpty) {
       return WeeklyReflectionSummary.empty;
     }
@@ -25,17 +26,21 @@ class MockWeeklyReflectionSummaryService
       (meal) => meal.status == WeeklyReflectionMealStatus.feedbackViewed,
     );
 
+    final goodPatterns = <String>[
+      if (hasFeedback)
+        'Several meals included clear protein sources or whole-food bases.'
+      else
+        'Your logged meals show thoughtful choices you can build on this week.',
+      meals.length >= 2
+          ? 'You logged ${meals.length} meals this week — a helpful pattern to notice.'
+          : 'Logging one meal is a solid start for weekly reflection.',
+    ];
+
     return WeeklyReflectionSummary(
-      goodPatterns: [
-        if (hasFeedback)
-          'Several meals included clear protein sources or whole-food bases.',
-        if (meals.length >= 2)
-          'You logged ${meals.length} meals this week — a helpful reflection habit.',
-        'Whole or minimally processed foods appeared in more than one entry.',
-      ].where((line) => line.isNotEmpty).take(3).toList(growable: false),
+      goodPatterns: goodPatterns,
       smallFocus: const [
-        'Try adding one more colourful vegetable to a few meals.',
-        'Choose lighter sauces when possible.',
+        'This week, try adding one more colourful vegetable when you log your next meal.',
+        'Across the week ahead, a lighter sauce or dressing can be an easy small tweak.',
       ],
     );
   }

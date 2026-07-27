@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 
 import 'forgot_password_page_controller.dart';
 import 'login_page.dart';
+import '../widgets/auth_form_text_field.dart';
 import '../widgets/page_back_button.dart';
 
-/// 忘记密码页：输入邮箱发送重置链接（无后端时为本地确认态）。
+/// 忘记密码页：用户名 + 新密码（原型，尚未接后端重置接口）。
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 
@@ -14,53 +15,79 @@ class ForgotPasswordPage extends StatefulWidget {
 }
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
-  final TextEditingController _emailController = TextEditingController();
-  String? _emailError;
-  bool _sent = false;
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  String? _usernameError;
+  String? _passwordError;
+  bool _obscurePassword = true;
+  bool _updated = false;
 
   @override
   void initState() {
     super.initState();
-    _emailController.addListener(_clearEmailError);
+    _usernameController.addListener(_clearUsernameError);
+    _passwordController.addListener(_clearPasswordError);
   }
 
-  void _clearEmailError() {
-    if (_emailError == null) {
+  void _clearUsernameError() {
+    if (_usernameError == null) {
       return;
     }
-    setState(() => _emailError = null);
+    setState(() => _usernameError = null);
+  }
+
+  void _clearPasswordError() {
+    if (_passwordError == null) {
+      return;
+    }
+    setState(() => _passwordError = null);
   }
 
   @override
   void dispose() {
-    _emailController.removeListener(_clearEmailError);
-    _emailController.dispose();
+    _usernameController.removeListener(_clearUsernameError);
+    _passwordController.removeListener(_clearPasswordError);
+    _usernameController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  String? _validateEmail(String email) {
-    if (email.isEmpty) {
-      return ForgotPasswordPageController.emptyEmailMessage;
+  String? _validateUsername(String username) {
+    if (username.isEmpty) {
+      return ForgotPasswordPageController.emptyUsernameMessage;
     }
-    if (!ForgotPasswordPageController.isValidEmail(email)) {
-      return ForgotPasswordPageController.invalidEmailMessage;
+    if (!ForgotPasswordPageController.isValidUsername(username)) {
+      return ForgotPasswordPageController.invalidUsernameMessage;
     }
     return null;
   }
 
-  void _submitResetLink() {
-    final email = _emailController.text.trim();
-    final emailError = _validateEmail(email);
+  String? _validatePassword(String password) {
+    if (password.isEmpty) {
+      return ForgotPasswordPageController.emptyPasswordMessage;
+    }
+    if (!ForgotPasswordPageController.isValidPassword(password)) {
+      return ForgotPasswordPageController.weakPasswordMessage;
+    }
+    return null;
+  }
+
+  void _submitResetPassword() {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+    final usernameError = _validateUsername(username);
+    final passwordError = _validatePassword(password);
 
     setState(() {
-      _emailError = emailError;
+      _usernameError = usernameError;
+      _passwordError = passwordError;
     });
 
-    if (emailError != null) {
+    if (usernameError != null || passwordError != null) {
       return;
     }
 
-    setState(() => _sent = true);
+    setState(() => _updated = true);
   }
 
   void _goToLogin() {
@@ -109,7 +136,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         SizedBox(
                           height: ForgotPasswordPageController.backToTitleGap.h,
                         ),
-                        if (_sent) ...[
+                        if (_updated) ...[
                           _buildSuccessContent(context),
                         ] else ...[
                           _buildFormContent(context),
@@ -152,16 +179,39 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         ),
         SizedBox(height: ForgotPasswordPageController.subtitleToFormGap.h),
         _buildValidatedField(
-          errorText: _emailError,
+          errorText: _usernameError,
           field: _buildInputField(
-            hint: ForgotPasswordPageController.emailHint,
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            hasError: _emailError != null,
+            hint: ForgotPasswordPageController.usernameHint,
+            controller: _usernameController,
+            hasError: _usernameError != null,
+          ),
+        ),
+        SizedBox(height: ForgotPasswordPageController.inputGap.h),
+        _buildValidatedField(
+          errorText: _passwordError,
+          field: _buildInputField(
+            hint: ForgotPasswordPageController.newPasswordHint,
+            controller: _passwordController,
+            obscureText: _obscurePassword,
+            hasError: _passwordError != null,
+            suffixIcon: IconButton(
+              onPressed: () {
+                setState(() => _obscurePassword = !_obscurePassword);
+              },
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints(minWidth: 32.w, minHeight: 32.w),
+              icon: Icon(
+                _obscurePassword
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                size: 20.sp,
+                color: ForgotPasswordPageController.hintColor,
+              ),
+            ),
           ),
         ),
         SizedBox(height: ForgotPasswordPageController.formToButtonGap.h),
-        _buildSendButton(context),
+        _buildResetButton(context),
         SizedBox(height: ForgotPasswordPageController.buttonToFooterGap.h),
         _buildLogInFooter(context),
       ],
@@ -173,7 +223,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(
-          Icons.mark_email_read_outlined,
+          Icons.lock_reset_outlined,
           size: 44.sp,
           color: ForgotPasswordPageController.successIconColor,
         ),
@@ -233,57 +283,33 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Widget _buildInputField({
     required String hint,
     bool hasError = false,
-    TextInputType? keyboardType,
+    bool obscureText = false,
+    Widget? suffixIcon,
     TextEditingController? controller,
   }) {
-    final borderRadius = BorderRadius.circular(
-      ForgotPasswordPageController.inputBorderRadius.r,
-    );
-    final borderColor = hasError
-        ? ForgotPasswordPageController.inputErrorBorderColor
-        : ForgotPasswordPageController.inputBorderColor;
-
-    return Container(
-      height: ForgotPasswordPageController.inputHeight.h,
-      decoration: BoxDecoration(
-        color: ForgotPasswordPageController.inputBackgroundColor,
-        borderRadius: borderRadius,
-        border: Border.all(color: borderColor, width: 1),
-      ),
-      alignment: Alignment.center,
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        textAlignVertical: TextAlignVertical.center,
-        style: TextStyle(
-          fontSize: ForgotPasswordPageController.inputFontSize.sp,
-          fontWeight: FontWeight.w500,
-          color: ForgotPasswordPageController.inputTextColor,
-          height: 1.0,
-        ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(
-            fontSize: ForgotPasswordPageController.hintFontSize.sp,
-            fontWeight: FontWeight.w400,
-            color: ForgotPasswordPageController.hintColor,
-            height: 1.0,
-          ),
-          isCollapsed: true,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
-        ),
-      ),
+    return AuthFormTextField(
+      height: ForgotPasswordPageController.inputHeight,
+      hint: hint,
+      controller: controller,
+      obscureText: obscureText,
+      hasError: hasError,
+      suffixIcon: suffixIcon,
+      useShadow: false,
+      backgroundColor: ForgotPasswordPageController.inputBackgroundColor,
+      borderColor: ForgotPasswordPageController.inputBorderColor,
+      errorBorderColor: ForgotPasswordPageController.inputErrorBorderColor,
+      textColor: ForgotPasswordPageController.inputTextColor,
+      hintColor: ForgotPasswordPageController.hintColor,
+      fontSize: ForgotPasswordPageController.inputFontSize,
+      hintFontSize: ForgotPasswordPageController.hintFontSize,
+      borderRadius: ForgotPasswordPageController.inputBorderRadius,
     );
   }
 
-  Widget _buildSendButton(BuildContext context) {
+  Widget _buildResetButton(BuildContext context) {
     return _buildPrimaryButton(
-      label: ForgotPasswordPageController.sendButton,
-      onTap: _submitResetLink,
+      label: ForgotPasswordPageController.resetButton,
+      onTap: _submitResetPassword,
     );
   }
 

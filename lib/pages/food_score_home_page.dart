@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'food_score_home_controller.dart';
 import '../config/page_layout.dart';
 import 'share_meal_page.dart';
+import '../widgets/meal_feedback_disclaimer.dart';
 import '../widgets/user_menu_drawer.dart';
 import 'weekly_reflection_page.dart';
 
@@ -50,9 +51,8 @@ class FoodScoreHomePage extends StatelessWidget {
                       height:
                           FoodScoreHomeController.reflectionToDisclaimerGap.h,
                     ),
-                    _buildDisclaimer(),
-                    SizedBox(
-                      height: FoodScoreHomeController.disclaimerBottomPadding.h,
+                    const MealFeedbackDisclaimerFooter(
+                      style: MealFeedbackDisclaimerStyle.full,
                     ),
                   ],
                 ),
@@ -338,22 +338,6 @@ class FoodScoreHomePage extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDisclaimer() {
-    return Center(
-      child: Text(
-        '${FoodScoreHomeController.disclaimerLine1}\n'
-        '${FoodScoreHomeController.disclaimerLine2}',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 12.sp,
-          fontWeight: FontWeight.w400,
-          color: FoodScoreHomeController.disclaimerColor,
-          height: 1.4,
         ),
       ),
     );

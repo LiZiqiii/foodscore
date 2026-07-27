@@ -1,8 +1,9 @@
 import 'package:ducafe_ui_core/ducafe_ui_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 
-import '../services/weekly_reflection_store.dart';
+import '../pages/meal_analysis_loading_page.dart';
 
 /// Feedback mode bottom sheet 文案。
 abstract final class MealFeedbackModeCopy {
@@ -55,20 +56,22 @@ Future<void> showMealFeedbackModeSheet(
 
 void saveMealForWeeklyReflection(
   BuildContext context, {
-  required String summary,
-  bool isPhoto = false,
+  String? mealText,
+  String? imagePath,
+  XFile? imageFile,
+  String? description,
 }) {
-  WeeklyReflectionStore.instance.addMeal(
-    summary: summary,
-    isPhoto: isPhoto,
-  );
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(MealFeedbackModeCopy.reflectionSavedMessage),
-      behavior: SnackBarBehavior.floating,
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => MealAnalysisLoadingPage(
+        mealText: mealText,
+        imagePath: imagePath,
+        imageFile: imageFile,
+        description: description,
+        saveForReflectionOnly: true,
+      ),
     ),
   );
-  Navigator.of(context).popUntil((route) => route.isFirst);
 }
 
 class _MealFeedbackModeSheet extends StatelessWidget {

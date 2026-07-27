@@ -1,42 +1,66 @@
 import 'package:flutter/material.dart';
 
+import '../coaching/coaching_preferences_constants.dart';
+
 /// 注册页文案、颜色与布局常量。
 class SignUpPageController {
   SignUpPageController._();
 
   static const String title = 'Create your account';
 
-  static const String emailHint = 'E-mail';
+  static const String usernameHint = 'Username';
   static const String passwordHint = 'Password';
 
-  static const String coachingLabel = 'Coaching (optional)';
-  static const String heightHint = 'Height cm';
-  static const String weightHint = 'Weight kg';
+  static const String coachingLabel = 'Meal coaching (optional)';
+  static const String coachingCollapsedHint =
+      'Helps personalize meal feedback.';
+  static const String aboutYouSection =
+      CoachingPreferencesConstants.aboutYouSection;
+  static const String ageLabel = CoachingPreferencesConstants.ageLabel;
+  static const String ageRangePlaceholder =
+      CoachingPreferencesConstants.ageRangePlaceholder;
+  static const List<String> ageRangeOptions =
+      CoachingPreferencesConstants.ageRangeOptions;
+  static const String heightHint = CoachingPreferencesConstants.heightHint;
+  static const String weightHint = CoachingPreferencesConstants.weightHint;
 
-  static const String healthDiabetes = 'Diabetes';
-  static const String healthHypertension = 'Hypertension';
-  static const String healthOther = 'Other';
+  static const String healthConsiderationsLabel =
+      CoachingPreferencesConstants.healthConsiderationsLabel;
 
-  static const List<String> healthOptions = [
-    healthDiabetes,
-    healthHypertension,
-    healthOther,
-  ];
+  static const String healthNone = CoachingPreferencesConstants.focusNone;
+  static const String healthDiabetes = CoachingPreferencesConstants.focusDiabetes;
+  static const String healthBloodPressure =
+      CoachingPreferencesConstants.focusBloodPressure;
+  static const String healthCholesterol =
+      CoachingPreferencesConstants.focusCholesterol;
+  static const String healthOther = CoachingPreferencesConstants.focusOther;
 
-  static const String otherHealthHint = 'Brief note, e.g. high cholesterol';
-  static const int otherHealthMaxLength = 48;
+  static const List<String> healthOptions =
+      CoachingPreferencesConstants.mealFocusOptions;
+
+  static const String otherHealthHint =
+      CoachingPreferencesConstants.otherNoteHint;
+  static const int otherHealthMaxLength =
+      CoachingPreferencesConstants.otherNoteMaxLength;
 
   static const int minPasswordLength = 8;
+  static const int maxUsernameLength = 50;
 
-  static const String emptyEmailMessage = 'Please enter your e-mail.';
-  static const String invalidEmailMessage = 'Please enter a valid e-mail.';
+  static const String emptyUsernameMessage = 'Please enter a username.';
+  static const String invalidUsernameMessage =
+      'Username must be 1–50 characters.';
+  static const String usernameExistsMessage = 'Username already exists.';
   static const String emptyPasswordMessage = 'Please enter a password.';
   static const String weakPasswordMessage =
       'Password must be at least 8 characters.';
 
   static const String createAccountButton = 'Create account';
+  static const String registrationSuccessMessage =
+      'Account created. Please log in.';
   static const String hasAccountPrefix = 'Already have an account? ';
   static const String logIn = 'Log in';
+  static const String requestFailedMessage =
+      'Could not reach the server. Please try again.';
 
   static const Color bgTop = Color(0xFFFFFFFF);
   static const Color bgMid = Color(0xFFF4FBF2);
@@ -44,6 +68,8 @@ class SignUpPageController {
 
   static const Color titleColor = Color(0xFF1B5E32);
   static const Color sectionTitleColor = Color(0xFF4A4B48);
+  static const Color coachingSubsectionColor = Color(0xFF8A8E8A);
+  static const Color chipOutlineColor = Color(0xFFDCE8DC);
   static const Color hintColor = Color(0xFFA8A8A8);
   static const Color inputTextColor = Color(0xFF2C2C2C);
   static const Color inputBackgroundColor = Color(0xFFFFFFFF);
@@ -64,6 +90,8 @@ class SignUpPageController {
   static const double backToTitleGap = 20;
   static const double titleFontSize = 26;
   static const double sectionTitleFontSize = 14;
+  static const double coachingTitleFontSize = 18;
+  static const double coachingSectionFontSize = 13;
   static const double inputFontSize = 15;
   static const double hintFontSize = 15;
   static const double buttonFontSize = 17;
@@ -76,21 +104,24 @@ class SignUpPageController {
   static const double fieldErrorGap = 6;
   static const double sectionGap = 22;
   static const double coachingLabelGap = 12;
+  static const double coachingInnerGap = 8;
+  static const double coachingSubsectionTopGap = 6;
   static const double metricsGap = 10;
   static const double chipGap = 8;
   static const double otherFieldGap = 10;
   static const double formToButtonGap = 26;
   static const double buttonToFooterGap = 20;
 
-  static const double inputHeight = 46;
+  static const double inputHeight = 40;
   static const double inputBorderRadius = 12;
   static const double buttonHeight = 50;
   static const double buttonBorderRadius = 14;
   static const double buttonElevation = 4;
   static const double chipHeight = 32;
 
-  static bool isValidEmail(String email) {
-    return RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(email);
+  static bool isValidUsername(String username) {
+    final trimmed = username.trim();
+    return trimmed.isNotEmpty && trimmed.length <= maxUsernameLength;
   }
 
   static bool isValidPassword(String password) {

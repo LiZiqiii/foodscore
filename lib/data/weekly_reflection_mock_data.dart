@@ -42,9 +42,8 @@ class WeeklyReflectionMockData {
   ];
 
   static const List<String> goodPatterns = [
-    'Protein appeared in most recorded meals.',
-    'Several meals included vegetables.',
-    'Whole or minimally processed foods appeared often.',
+    'Protein appeared in most recorded meals this week.',
+    'Several meals included vegetables or whole-food bases.',
   ];
 
   static const List<String> smallFocus = [

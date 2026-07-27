@@ -2,10 +2,14 @@ import 'dart:math' as math;
 
 import 'package:ducafe_ui_core/ducafe_ui_core.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../config/app_config.dart';
 import '../models/food_score_result.dart';
 import '../services/food_score_service.dart';
 import '../services/food_score_service_factory.dart';
+import '../services/meal_record_service.dart';
+import '../services/meal_record_service_factory.dart';
 import '../services/mock_food_score_service.dart';
 import '../services/weekly_reflection_store.dart';
 import 'meal_analysis_loading_controller.dart';
@@ -17,17 +21,25 @@ class MealAnalysisLoadingPage extends StatefulWidget {
     super.key,
     this.mealText,
     this.imagePath,
+    this.imageFile,
     this.description,
+    this.saveForReflectionOnly = false,
   });
 
   /// 文字描述流程传入的餐食说明。
   final String? mealText;
 
-  /// 照片流程传入的本地图片路径。
+  /// 照片流程传入的本地图片路径（Web 上多为 blob URL，上传请用 [imageFile]）。
   final String? imagePath;
+
+  /// 照片流程选中的文件；Web 上必须用此字段读取字节。
+  final XFile? imageFile;
 
   /// 照片流程可选的补充描述。
   final String? description;
+
+  /// 为 true 时不进入 Result 页，分析完成后写入 weekly reflection 并回首页。
+  final bool saveForReflectionOnly;
 
   @override
   State<MealAnalysisLoadingPage> createState() =>
@@ -41,6 +53,7 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
   late final Animation<double> _pulseAnimation;
   bool _isAnalysing = true;
   String? _errorMessage;
+  bool _analysisUsedMock = AppConfig.useMockResult;
 
   @override
   void initState() {
@@ -74,26 +87,56 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
     }
 
     final service = serviceOverride ?? _createService();
+    _analysisUsedMock =
+        serviceOverride is MockFoodScoreService || AppConfig.useMockResult;
 
     try {
       final FoodScoreResult result;
       if (widget.imagePath != null && widget.imagePath!.isNotEmpty) {
+        List<int>? imageBytes;
+        String? imageFileName;
+        if (widget.imageFile != null) {
+          imageBytes = await widget.imageFile!.readAsBytes();
+          imageFileName = widget.imageFile!.name;
+        }
         result = await service.analyseMealFromImage(
           imagePath: widget.imagePath!,
+          imageBytes: imageBytes,
+          imageFileName: imageFileName,
           description: widget.description,
+          userId: currentUserId,
         );
       } else {
-        result = await service.analyseMealFromText(widget.mealText ?? '');
+        result = await service.analyseMealFromText(
+          widget.mealText ?? '',
+          userId: currentUserId,
+        );
       }
 
       if (!mounted) {
         return;
       }
-      _goToResultPage(result);
+
+      await _persistMealRecordIfNeeded(result);
+
+      if (!mounted) {
+        return;
+      }
+      if (widget.saveForReflectionOnly) {
+        _finishReflectionSave(result);
+      } else {
+        _goToResultPage(result);
+      }
     } on FoodScoreServiceException catch (error) {
       _showError(error.message);
-    } catch (_) {
-      _showError(MealAnalysisLoadingController.errorFallbackMessage);
+    } catch (error, stackTrace) {
+      debugPrint('Meal analysis failed: $error\n$stackTrace');
+      final detail = error.toString();
+      if (detail.isNotEmpty && detail.length < 280) {
+        _showError(detail);
+      } else {
+        _showError(MealAnalysisLoadingController.errorFallbackMessage);
+      }
     }
   }
 
@@ -115,6 +158,52 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
     );
   }
 
+  Future<void> _persistMealRecordIfNeeded(FoodScoreResult result) async {
+    if (_analysisUsedMock) {
+      return;
+    }
+
+    final service = createMealRecordService();
+    if (service == null) {
+      return;
+    }
+
+    final mealText = _originalMealTextForSave();
+    if (mealText.isEmpty) {
+      return;
+    }
+
+    try {
+      await service.saveMealRecord(
+        userId: currentUserId,
+        mealText: mealText,
+        result: result,
+      );
+    } on MealRecordServiceException catch (error) {
+      debugPrint('Meal record save failed: ${error.message}');
+    } catch (error) {
+      debugPrint('Meal record save failed: $error');
+    }
+  }
+
+  String _originalMealTextForSave() {
+    final mealText = widget.mealText?.trim();
+    if (mealText != null && mealText.isNotEmpty) {
+      return mealText;
+    }
+
+    final description = widget.description?.trim();
+    if (description != null && description.isNotEmpty) {
+      return description;
+    }
+
+    if (widget.imagePath != null && widget.imagePath!.isNotEmpty) {
+      return 'Meal photo';
+    }
+
+    return '';
+  }
+
   void _goToResultPage(FoodScoreResult result) {
     if (!mounted) {
       return;
@@ -125,6 +214,7 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
     WeeklyReflectionStore.instance.addFromInstantFeedback(
       result,
       isPhoto: isPhoto,
+      mealText: _originalMealTextForSave(),
     );
 
     Navigator.of(context).pushReplacement(
@@ -132,6 +222,39 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
         builder: (_) => ResultPage(result: result),
       ),
     );
+  }
+
+  void _finishReflectionSave(FoodScoreResult result) {
+    if (!mounted) {
+      return;
+    }
+
+    final isPhoto =
+        widget.imagePath != null && widget.imagePath!.isNotEmpty;
+    WeeklyReflectionStore.instance.addFromReflectionSave(
+      result,
+      isPhoto: isPhoto,
+      mealText: _originalMealTextForSave(),
+    );
+
+    final messenger = ScaffoldMessenger.of(context);
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text(MealAnalysisLoadingController.reflectionSavedMessage),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  String get _loadingTitle {
+    if (!_isAnalysing) {
+      return MealAnalysisLoadingController.errorTitle;
+    }
+    if (widget.saveForReflectionOnly) {
+      return MealAnalysisLoadingController.reflectionSaveTitle;
+    }
+    return MealAnalysisLoadingController.title;
   }
 
   @override
@@ -204,9 +327,7 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
           _buildBrandedLoader(),
           SizedBox(height: 22.h),
           Text(
-            _isAnalysing
-                ? MealAnalysisLoadingController.title
-                : MealAnalysisLoadingController.errorTitle,
+            _loadingTitle,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: MealAnalysisLoadingController.titleFontSize.sp,
@@ -215,21 +336,19 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
               height: 1.3,
             ),
           ),
-          SizedBox(height: 10.h),
-          Text(
-            _isAnalysing
-                ? MealAnalysisLoadingController.subtitle
-                : _errorMessage!,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: MealAnalysisLoadingController.subtitleFontSize.sp,
-              fontWeight: FontWeight.w400,
-              color: _isAnalysing
-                  ? MealAnalysisLoadingController.subtitleColor
-                  : MealAnalysisLoadingController.errorMessageColor,
-              height: 1.45,
+          if (!_isAnalysing && _errorMessage != null) ...[
+            SizedBox(height: 10.h),
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: MealAnalysisLoadingController.subtitleFontSize.sp,
+                fontWeight: FontWeight.w400,
+                color: MealAnalysisLoadingController.errorMessageColor,
+                height: 1.45,
+              ),
             ),
-          ),
+          ],
           if (_isAnalysing) ...[
             SizedBox(height: 8.h),
             Text(

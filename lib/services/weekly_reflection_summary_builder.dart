@@ -48,7 +48,7 @@ abstract final class WeeklyReflectionSummaryBuilder {
 
     for (final entry in repeatedTags.where((e) => e.value >= 2).take(2)) {
       goodPatterns.add(
-        '${entry.key} appeared in several of your recent meals.',
+        '${entry.key} appeared in several meals this week.',
       );
     }
 
@@ -59,20 +59,30 @@ abstract final class WeeklyReflectionSummaryBuilder {
             : 'You logged ${meals.length} meals in the last 7 days.',
       );
     }
+    if (goodPatterns.length == 1) {
+      goodPatterns.add(
+        'Noticing small wins each week can make gentle changes feel easier.',
+      );
+    }
 
     for (final entry in repeatedTags.where((e) => e.value == 1).take(2)) {
       smallFocus.add(
-        'When it feels right, you could explore ${entry.key.toLowerCase()}.',
+        'When it feels right next week, you could explore ${entry.key.toLowerCase()}.',
       );
     }
 
     if (smallFocus.isEmpty) {
       smallFocus.add('Keep saving meals you want to reflect on next week.');
     }
+    if (smallFocus.length == 1) {
+      smallFocus.add(
+        'When it feels right, you could add one more colourful vegetable to a meal this week.',
+      );
+    }
 
     return WeeklyReflectionSummary(
-      goodPatterns: goodPatterns,
-      smallFocus: smallFocus,
+      goodPatterns: goodPatterns.take(2).toList(growable: false),
+      smallFocus: smallFocus.take(2).toList(growable: false),
     );
   }
 }

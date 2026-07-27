@@ -56,9 +56,9 @@ class FoodScoreHomeController {
   static const double heroContentTopGap = 24;
   static const double brandFontSize = 18;
   static const double brandTopInset = 10;
-  static const double welcomeCardHeight = 128;
+  static const double welcomeCardHeight = 140;
   static const double welcomeCardRadius = 16;
-  static const double welcomeTitleFontSize = 22;
+  static const double welcomeTitleFontSize = 24;
   static const double welcomeSubtitleFontSize = 13;
   static const double welcomeMealImageWidth = 92;
   static const double welcomeToFeaturesGap = 20;

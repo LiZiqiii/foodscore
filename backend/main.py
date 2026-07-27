@@ -2,37 +2,71 @@
 FoodScore local FastAPI proxy.
 
 Flutter -> POST /analyse-text -> OpenAI (structured JSON) -> FoodScoreResult JSON
+Flutter -> POST /analyse-image -> OpenAI vision (structured JSON) -> FoodScoreResult JSON
 Flutter -> POST /weekly-summary -> OpenAI (structured JSON) -> Weekly summary JSON
 Flutter -> POST /meal-records -> SQLite (save analysed meal)
 Flutter -> GET /meal-records/recent -> SQLite (recent meal history)
+Flutter -> POST /auth/register -> SQLite (create user)
+Flutter -> POST /auth/login -> SQLite (verify user)
 
 API key lives only in backend/.env (OPENAI_API_KEY).
 """
 
 from __future__ import annotations
 
+import base64
 import json
+import logging
 import os
+import re
 import sqlite3
 from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 from pydantic import BaseModel, Field, field_validator
 
+from auth_utils import hash_password, verify_password
+from coaching_profile_prompt import (
+    compose_meal_analysis_user_message as _compose_meal_analysis_user_message,
+    compose_meal_image_analysis_user_message as _compose_meal_image_analysis_user_message,
+    compose_weekly_reflection_user_message as _compose_weekly_reflection_user_message,
+    profile_has_coaching_context as _profile_has_coaching_context,
+    system_prompt_with_coaching as _system_prompt_with_coaching_base,
+    user_context_lines as _user_context_lines,
+)
 from database import (
+    DEFAULT_RECENT_DAYS,
     DEFAULT_USER_ID,
+    UsernameAlreadyExistsError,
+    create_user,
     get_recent_meal_records,
+    get_user_by_username,
+    get_user_profile,
     init_db,
     insert_meal_record,
+    normalize_username,
+    upsert_user_profile,
+    username_exists,
 )
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+ALLOWED_IMAGE_MEDIA_TYPES = frozenset({"image/jpeg", "image/png", "image/webp"})
+MAX_IMAGE_BYTES = 10 * 1024 * 1024
+
+VISION_MEAL_PROMPT_ADDENDUM = """
+=== Photo input ===
+The user message includes a meal photo. Assess visible foods and reasonable portions.
+Do not invent ingredients that are not visible or reasonably implied. If details are unclear, say so in summary and insights.
+"""
 
 FIXED_DISCLAIMER = "Meal-level feedback only. Not medical or nutrition advice."
 
@@ -149,38 +183,36 @@ supports the meal balance score, adds a clear protein source, helps improve vari
 - Do NOT include fields named strengths or concerns.
 """
 
+USER_PROFILE_CONTEXT_INSTRUCTIONS = """
+=== User context in the user message ===
+When USER CONTEXT — FOR INTERNAL PERSONALISATION is present, follow the PERSONALISATION INSTRUCTION in that message.
+Personalise coaching text only; keep scores meal-based. No explicit profile call-outs, medical claims, or forced personalisation when unrelated.
+"""
+
 WEEKLY_SUMMARY_SYSTEM_PROMPT = """You are FoodScore, a meal-quality reflection assistant.
 
-The user saved several meals from the last 7 days. In the app, your response is shown FIRST as the primary weekly reflection. Individual meal records appear below for reference only.
+This output is the app's WEEKLY "This week" section — not instant single-meal analysis on the Result page.
 
-Return ONE JSON object matching the provided schema with two lists:
-- goodPatterns: 2 to 4 short bullet-style sentences (what went well this week)
-- smallFocus: 1 to 3 short bullet-style sentences (gentle suggestions for next week)
+Return JSON with exactly 2 goodPatterns and 2 smallFocus strings.
 
-Write the summary so it stands alone — the user may read only this section before scrolling to meal records.
+HARD LIMIT (every string): exactly ONE English sentence, at most 22 words. One idea per line. Short, phone-friendly.
 
-=== goodPatterns ===
-- Identify gentle, supportive patterns across the week's meals.
-- Look for recurring positives such as protein sources, vegetables, whole foods, variety, balance, or minimally processed ingredients.
-- Mention patterns that appear in more than one meal when relevant.
-- Be specific to the provided meals — do not invent ingredients or habits not supported by the input.
-- If only one meal was logged, focus on what that meal does well and frame it as a starting point for reflection.
+WEEK FRAMING (required in every bullet):
+- Write about the user's WEEK (last 7 days), even when only one meal was logged.
+- Use wording such as "this week", "your week", "across the week", "the meal you logged this week", "so far this week".
+- Do NOT write as if reviewing one isolated meal: avoid "this meal", "the meal features", or Result-page instant-feedback tone.
+- With one logged meal, frame it as an early weekly snapshot (e.g. "This week, your logged meal included…"), not a one-off meal review.
 
-=== smallFocus ===
-- Offer 1 to 3 small, realistic, non-judgemental suggestions for the coming week.
-- Focus on additions, substitutions, moderation, or gentle variety — not criticism.
-- Draw from tags or improvement themes in the meal data when helpful.
-- Keep suggestions practical for everyday meals.
-- Frame as forward-looking guidance, since this appears in the "gentle focus" section above meal records.
+goodPatterns — two positives from the week's meals (protein, veg, whole foods, variety). Summarise patterns across meals when there are several; with one meal, note what that entry shows about the week so far. If fewer than 3 meals were logged, at least one bullet should gently note limited records.
 
-=== Tone and constraints ===
-- Supportive, neutral, and non-judgemental throughout.
-- Meal-level food quality only — NOT medical advice, NOT nutrition calculation, NOT weight or body commentary.
-- Do NOT use: Bad, Unhealthy, Poor, Lack, Too much, Excess, Warning, Problem
-- Do NOT make medical or exaggerated claims.
-- Prefer wording such as: Could add, Next time, Small improvement, When it feels right, Details are unclear
-- Output ONLY valid JSON per schema. No markdown. No extra commentary.
+smallFocus — two gentle next steps for the coming week (additions, swaps, moderation). One realistic action per bullet. Do not repeat the same ingredient or recommendation across bullets.
+
+Tone: supportive, neutral. Meal quality only — not medical advice, calories, or body commentary. Avoid: Bad, Unhealthy, Poor, Lack, Too much, Excess, Warning, Problem.
+
+Output ONLY valid JSON per schema. No markdown.
 """
+
+_WEEKLY_BULLET_MAX_WORDS = 22
 
 _INSIGHT_ITEM_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -258,13 +290,13 @@ WEEKLY_SUMMARY_JSON_SCHEMA: dict[str, Any] = {
         "goodPatterns": {
             "type": "array",
             "minItems": 2,
-            "maxItems": 4,
+            "maxItems": 2,
             "items": {"type": "string"},
         },
         "smallFocus": {
             "type": "array",
-            "minItems": 1,
-            "maxItems": 3,
+            "minItems": 2,
+            "maxItems": 2,
             "items": {"type": "string"},
         },
     },
@@ -274,6 +306,7 @@ WEEKLY_SUMMARY_JSON_SCHEMA: dict[str, Any] = {
 
 class AnalyseTextRequest(BaseModel):
     mealText: str = Field(min_length=1)
+    userId: str | None = None
 
 
 class DimensionResponse(BaseModel):
@@ -323,19 +356,22 @@ class FoodScoreResultResponse(BaseModel):
 
 class WeeklySummaryMealInput(BaseModel):
     mealName: str = Field(min_length=1)
+    mealText: str = Field(min_length=1)
     summary: str = Field(min_length=1)
     tags: list[str] = Field(default_factory=list)
     status: str = Field(min_length=1)
     dayLabel: str | None = None
+    isPhoto: bool = False
 
 
 class WeeklySummaryRequest(BaseModel):
     meals: list[WeeklySummaryMealInput] = Field(min_length=1, max_length=30)
+    userId: str | None = None
 
 
 class WeeklySummaryResponse(BaseModel):
-    goodPatterns: list[str] = Field(min_length=2, max_length=4)
-    smallFocus: list[str] = Field(min_length=1, max_length=3)
+    goodPatterns: list[str] = Field(min_length=2, max_length=2)
+    smallFocus: list[str] = Field(min_length=2, max_length=2)
 
 
 class SaveMealRecordRequest(BaseModel):
@@ -360,11 +396,70 @@ class MealRecordSummary(BaseModel):
     overallLabel: str
     summary: str
     tips: str
+    tags: list[str] = Field(default_factory=list)
     createdAt: str
 
 
 class RecentMealRecordsResponse(BaseModel):
     meals: list[MealRecordSummary]
+
+
+class AuthRegisterRequest(BaseModel):
+    username: str = Field(min_length=1, max_length=50)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class AuthLoginRequest(BaseModel):
+    username: str = Field(min_length=1, max_length=50)
+    password: str = Field(min_length=1, max_length=128)
+
+
+class AuthUserResponse(BaseModel):
+    userId: int
+    username: str
+
+
+class SaveUserProfileRequest(BaseModel):
+    userId: str = Field(min_length=1)
+    ageRange: str | None = None
+    heightCm: str | int | float | None = None
+    weightKg: str | int | float | None = None
+    dietaryPreference: str | None = None
+    healthContext: str | None = None
+    healthConditions: list[str] = Field(default_factory=list)
+    healthOtherNote: str | None = None
+
+
+class UserProfileResponse(BaseModel):
+    userId: str
+    ageRange: str | None = None
+    heightCm: str | None = None
+    weightKg: str | None = None
+    dietaryPreference: str | None = None
+    healthContext: str | None = None
+    healthConditions: list[str] = Field(default_factory=list)
+    healthOtherNote: str | None = None
+    updatedAt: str
+
+
+def _system_prompt_with_coaching(
+    base_prompt: str,
+    profile: dict[str, Any] | None,
+) -> str:
+    return _system_prompt_with_coaching_base(
+        base_prompt,
+        profile,
+        USER_PROFILE_CONTEXT_INSTRUCTIONS,
+    )
+
+
+def _resolve_user_profile(user_id: str | None) -> dict[str, Any] | None:
+    if user_id is None:
+        return None
+    trimmed_user_id = user_id.strip()
+    if not trimmed_user_id:
+        return None
+    return get_user_profile(trimmed_user_id)
 
 
 def _compute_overall_score(dimensions: list[dict[str, Any]]) -> int:
@@ -449,16 +544,24 @@ def _get_openai_client() -> OpenAI:
     return OpenAI(api_key=OPENAI_API_KEY)
 
 
-def _call_openai(meal_text: str) -> dict[str, Any]:
+def _call_openai(
+    meal_text: str,
+    profile: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     client = _get_openai_client()
+    user_content = _compose_meal_analysis_user_message(meal_text, profile)
+
     response = client.chat.completions.create(
         model=OPENAI_MODEL,
         temperature=0.4,
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {
+                "role": "system",
+                "content": _system_prompt_with_coaching(SYSTEM_PROMPT, profile),
+            },
             {
                 "role": "user",
-                "content": f"Analyse this meal description:\n\n{meal_text}",
+                "content": user_content,
             },
         ],
         response_format={
@@ -486,36 +589,162 @@ def _call_openai(meal_text: str) -> dict[str, Any]:
     return payload
 
 
+def _call_openai_vision(
+    image_bytes: bytes,
+    content_type: str,
+    description: str | None,
+    profile: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    client = _get_openai_client()
+    user_text = _compose_meal_image_analysis_user_message(description, profile)
+    encoded = base64.standard_b64encode(image_bytes).decode("ascii")
+    data_url = f"data:{content_type};base64,{encoded}"
+    system_prompt = f"{SYSTEM_PROMPT}\n{VISION_MEAL_PROMPT_ADDENDUM}"
+
+    response = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        temperature=0.4,
+        messages=[
+            {
+                "role": "system",
+                "content": _system_prompt_with_coaching(system_prompt, profile),
+            },
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": user_text},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": data_url, "detail": "auto"},
+                    },
+                ],
+            },
+        ],
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "food_score_result",
+                "strict": True,
+                "schema": RESPONSE_JSON_SCHEMA,
+            },
+        },
+    )
+
+    content = response.choices[0].message.content
+    if not content:
+        raise HTTPException(status_code=502, detail="OpenAI returned empty content.")
+
+    try:
+        payload = json.loads(content)
+    except json.JSONDecodeError as error:
+        raise HTTPException(
+            status_code=502,
+            detail=f"OpenAI returned invalid JSON: {error}",
+        ) from error
+
+    return payload
+
+
+def _first_sentence(text: str) -> str:
+    text = text.strip()
+    if not text:
+        return text
+    match = re.match(r"^(.+?[.!?])(?:\s|$)", text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    return text
+
+
+def _clamp_weekly_bullet(text: str, max_words: int = _WEEKLY_BULLET_MAX_WORDS) -> str:
+    text = _first_sentence(text)
+    words = text.split()
+    if len(words) <= max_words:
+        return text
+    clipped = " ".join(words[:max_words]).rstrip(",;:")
+    if clipped and clipped[-1] not in ".!?":
+        clipped += "."
+    return clipped
+
+
+def _apply_weekly_framing_language(text: str) -> str:
+    """Nudge instant-meal phrasing toward week framing in weekly bullets."""
+    text = re.sub(r"\bThis meal\b", "This week, your logged meal", text)
+    text = re.sub(r"\bthis meal\b", "this week's logged meal", text)
+    return text
+
+
+def _normalize_weekly_summary_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "goodPatterns": [
+            _apply_weekly_framing_language(
+                _clamp_weekly_bullet(str(item))
+            )
+            for item in payload.get("goodPatterns", [])
+        ],
+        "smallFocus": [
+            _apply_weekly_framing_language(
+                _clamp_weekly_bullet(str(item))
+            )
+            for item in payload.get("smallFocus", [])
+        ],
+    }
+
+
 def _format_weekly_summary_user_message(meals: list[WeeklySummaryMealInput]) -> str:
-    lines = [
-        "Generate the primary weekly reflection summary for the app. "
-        "This summary is shown at the top; meal records are listed below it.",
-        "",
-        "Meals logged in the last 7 days (newest first):",
+    """Weekly meal records body (embedded in WEEKLY MEAL DATA by compose_weekly_reflection_user_message)."""
+    meal_count = len(meals)
+    lines: list[str] = [
+        "Task: Write the app's weekly 'This week' reflection (not single-meal Result-page copy).",
+        "Use week framing in every goodPatterns and smallFocus sentence, even if only one meal is listed below.",
         "",
     ]
+    if meal_count < 3:
+        lines.append(
+            f"Note: only {meal_count} meal(s) logged in the last 7 days — "
+            "treat patterns cautiously and note limited records where appropriate."
+        )
+        lines.append("")
+    lines.append("Meals logged in the last 7 days (newest first):")
+    lines.append("")
     for index, meal in enumerate(meals, start=1):
         lines.append(f"Meal {index}: {meal.mealName.strip()}")
         if meal.dayLabel:
             lines.append(f"When logged: {meal.dayLabel.strip()}")
         lines.append(f"Status: {meal.status.strip()}")
-        lines.append(f"Summary: {meal.summary.strip()}")
+        logged = meal.mealText.strip()
+        if meal.isPhoto and logged.lower() == "meal photo":
+            lines.append("Input type: meal photo (no extra text description).")
+        elif logged:
+            lines.append(f"What the user logged (primary): {logged}")
+        lines.append(f"Instant feedback summary: {meal.summary.strip()}")
         if meal.tags:
-            lines.append(f"Tags: {', '.join(tag.strip() for tag in meal.tags if tag.strip())}")
+            lines.append(f"Insight tags: {', '.join(tag.strip() for tag in meal.tags if tag.strip())}")
         lines.append("")
     return "\n".join(lines).strip()
 
 
-def _call_openai_weekly_summary(meals: list[WeeklySummaryMealInput]) -> dict[str, Any]:
+def _call_openai_weekly_summary(
+    meals: list[WeeklySummaryMealInput],
+    profile: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     client = _get_openai_client()
+    weekly_data = _format_weekly_summary_user_message(meals)
+    user_content = _compose_weekly_reflection_user_message(weekly_data, profile)
+
     response = client.chat.completions.create(
         model=OPENAI_MODEL,
         temperature=0.4,
         messages=[
-            {"role": "system", "content": WEEKLY_SUMMARY_SYSTEM_PROMPT},
+            {
+                "role": "system",
+                "content": _system_prompt_with_coaching(
+                    WEEKLY_SUMMARY_SYSTEM_PROMPT,
+                    profile,
+                ),
+            },
             {
                 "role": "user",
-                "content": _format_weekly_summary_user_message(meals),
+                "content": user_content,
             },
         ],
         response_format={
@@ -546,14 +775,94 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.post("/auth/register", response_model=AuthUserResponse)
+def auth_register(request: AuthRegisterRequest) -> AuthUserResponse:
+    display_username = request.username.strip()
+    username_key = normalize_username(request.username)
+    password = request.password
+
+    if not username_key:
+        raise HTTPException(status_code=400, detail="username cannot be empty.")
+
+    if username_exists(request.username):
+        raise HTTPException(
+            status_code=409,
+            detail="Username already exists.",
+        )
+
+    try:
+        password_hash = hash_password(password)
+        user = create_user(username=display_username, password_hash=password_hash)
+        return AuthUserResponse.model_validate(user)
+    except UsernameAlreadyExistsError:
+        raise HTTPException(
+            status_code=409,
+            detail="Username already exists.",
+        ) from None
+    except sqlite3.Error as error:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to register user: {error}",
+        ) from error
+    except HTTPException:
+        raise
+    except Exception as error:  # noqa: BLE001 — surface as API error
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to register user: {error}",
+        ) from error
+
+
+@app.post("/auth/login", response_model=AuthUserResponse)
+def auth_login(request: AuthLoginRequest) -> AuthUserResponse:
+    username = normalize_username(request.username)
+    password = request.password
+
+    if not username:
+        raise HTTPException(status_code=400, detail="username cannot be empty.")
+
+    try:
+        user = get_user_by_username(username)
+        if user is None or not verify_password(password, user["password_hash"]):
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid username or password.",
+            )
+
+        return AuthUserResponse(
+            userId=user["id"],
+            username=user["username"],
+        )
+    except HTTPException:
+        raise
+    except sqlite3.Error as error:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to log in: {error}",
+        ) from error
+    except Exception as error:  # noqa: BLE001 — surface as API error
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to log in: {error}",
+        ) from error
+
+
 @app.post("/analyse-text", response_model=FoodScoreResultResponse)
 def analyse_text(request: AnalyseTextRequest) -> FoodScoreResultResponse:
     meal_text = request.mealText.strip()
     if not meal_text:
         raise HTTPException(status_code=400, detail="mealText cannot be empty.")
 
+    profile = _resolve_user_profile(request.userId)
+    if profile and _profile_has_coaching_context(profile):
+        logger.info(
+            "analyse-text user context userId=%s fields=%s",
+            request.userId,
+            _user_context_lines(profile),
+        )
+
     try:
-        payload = _call_openai(meal_text)
+        payload = _call_openai(meal_text, profile=profile)
         payload["disclaimer"] = FIXED_DISCLAIMER
         payload = _apply_score_logic(payload)
         result = FoodScoreResultResponse.model_validate(payload)
@@ -567,15 +876,72 @@ def analyse_text(request: AnalyseTextRequest) -> FoodScoreResultResponse:
         ) from error
 
 
+@app.post("/analyse-image", response_model=FoodScoreResultResponse)
+async def analyse_image(
+    image: UploadFile = File(...),
+    description: str | None = Form(None),
+    userId: str | None = Form(None),
+) -> FoodScoreResultResponse:
+    content_type = (image.content_type or "").split(";")[0].strip().lower()
+    if content_type not in ALLOWED_IMAGE_MEDIA_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported image type. Use JPEG, PNG, or WebP.",
+        )
+
+    try:
+        raw = await image.read()
+    except Exception as error:  # noqa: BLE001
+        raise HTTPException(
+            status_code=400,
+            detail=f"Could not read uploaded image: {error}",
+        ) from error
+
+    if not raw:
+        raise HTTPException(status_code=400, detail="Empty image file.")
+    if len(raw) > MAX_IMAGE_BYTES:
+        raise HTTPException(
+            status_code=400,
+            detail="Image too large (max 10 MB).",
+        )
+
+    profile = _resolve_user_profile(userId)
+    if profile and _profile_has_coaching_context(profile):
+        logger.info(
+            "analyse-image user context userId=%s fields=%s",
+            userId,
+            _user_context_lines(profile),
+        )
+
+    desc = description.strip() if description else None
+    if desc == "":
+        desc = None
+
+    try:
+        payload = _call_openai_vision(raw, content_type, desc, profile=profile)
+        payload["disclaimer"] = FIXED_DISCLAIMER
+        payload = _apply_score_logic(payload)
+        return FoodScoreResultResponse.model_validate(payload)
+    except HTTPException:
+        raise
+    except Exception as error:  # noqa: BLE001 — surface as API error for Flutter
+        raise HTTPException(
+            status_code=502,
+            detail=f"Failed to analyse meal photo: {error}",
+        ) from error
+
+
 @app.post("/weekly-summary", response_model=WeeklySummaryResponse)
 def weekly_summary(request: WeeklySummaryRequest) -> WeeklySummaryResponse:
     meals = [
         WeeklySummaryMealInput(
             mealName=meal.mealName.strip(),
+            mealText=meal.mealText.strip(),
             summary=meal.summary.strip(),
             tags=[tag.strip() for tag in meal.tags if tag.strip()],
             status=meal.status.strip(),
             dayLabel=meal.dayLabel.strip() if meal.dayLabel else None,
+            isPhoto=meal.isPhoto,
         )
         for meal in request.meals
     ]
@@ -583,8 +949,27 @@ def weekly_summary(request: WeeklySummaryRequest) -> WeeklySummaryResponse:
     if not meals:
         raise HTTPException(status_code=400, detail="At least one meal is required.")
 
+    profile = _resolve_user_profile(request.userId)
+    if profile and _profile_has_coaching_context(profile):
+        logger.info(
+            "weekly-summary user context userId=%s fields=%s",
+            request.userId,
+            _user_context_lines(profile),
+        )
+    elif profile:
+        logger.info(
+            "weekly-summary loaded user profile userId=%s (no meaningful health/dietary context)",
+            request.userId,
+        )
+    else:
+        logger.info(
+            "weekly-summary no user profile loaded userId=%s",
+            request.userId,
+        )
+
     try:
-        payload = _call_openai_weekly_summary(meals)
+        payload = _call_openai_weekly_summary(meals, profile=profile)
+        payload = _normalize_weekly_summary_payload(payload)
         return WeeklySummaryResponse.model_validate(payload)
     except HTTPException:
         raise
@@ -592,6 +977,55 @@ def weekly_summary(request: WeeklySummaryRequest) -> WeeklySummaryResponse:
         raise HTTPException(
             status_code=502,
             detail=f"Failed to generate weekly summary: {error}",
+        ) from error
+
+
+@app.put("/user-profile", response_model=UserProfileResponse)
+def save_user_profile(request: SaveUserProfileRequest) -> UserProfileResponse:
+    user_id = request.userId.strip()
+    if not user_id:
+        raise HTTPException(status_code=400, detail="userId cannot be empty.")
+
+    try:
+        saved = upsert_user_profile(
+            user_id=user_id,
+            age_range=request.ageRange,
+            height_cm=request.heightCm,
+            weight_kg=request.weightKg,
+            dietary_preference=request.dietaryPreference,
+            health_context=request.healthContext,
+            health_conditions=request.healthConditions,
+            health_other_note=request.healthOtherNote,
+        )
+        return UserProfileResponse.model_validate(saved)
+    except sqlite3.Error as error:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save user profile: {error}",
+        ) from error
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@app.get("/user-profile", response_model=UserProfileResponse)
+def load_user_profile(
+    userId: str = Query(min_length=1),
+) -> UserProfileResponse:
+    user_id = userId.strip()
+    if not user_id:
+        raise HTTPException(status_code=400, detail="userId cannot be empty.")
+
+    try:
+        profile = get_user_profile(user_id)
+        if profile is None:
+            raise HTTPException(status_code=404, detail="User profile not found.")
+        return UserProfileResponse.model_validate(profile)
+    except HTTPException:
+        raise
+    except sqlite3.Error as error:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load user profile: {error}",
         ) from error
 
 
@@ -630,6 +1064,7 @@ def save_meal_record(request: SaveMealRecordRequest) -> SaveMealRecordResponse:
 @app.get("/meal-records/recent", response_model=RecentMealRecordsResponse)
 def recent_meal_records(
     userId: str = Query(default=DEFAULT_USER_ID, min_length=1),
+    days: int = Query(default=DEFAULT_RECENT_DAYS, ge=1, le=365),
     limit: int = Query(default=10, ge=1, le=100),
 ) -> RecentMealRecordsResponse:
     user_id = userId.strip()
@@ -637,7 +1072,11 @@ def recent_meal_records(
         raise HTTPException(status_code=400, detail="userId cannot be empty.")
 
     try:
-        meals = get_recent_meal_records(user_id=user_id, limit=limit)
+        meals = get_recent_meal_records(
+            user_id=user_id,
+            days=days,
+            limit=limit,
+        )
         return RecentMealRecordsResponse(
             meals=[MealRecordSummary.model_validate(meal) for meal in meals]
         )

@@ -16,7 +16,10 @@ class MockFoodScoreService implements FoodScoreService {
       FoodScoreMockData.resolve(_scenario);
 
   @override
-  Future<FoodScoreResult> analyseMealFromText(String mealText) async {
+  Future<FoodScoreResult> analyseMealFromText(
+    String mealText, {
+    String? userId,
+  }) async {
     await Future<void>.delayed(simulatedDelay);
     return _resultForInput(mealText: mealText);
   }
@@ -24,7 +27,10 @@ class MockFoodScoreService implements FoodScoreService {
   @override
   Future<FoodScoreResult> analyseMealFromImage({
     required String imagePath,
+    List<int>? imageBytes,
+    String? imageFileName,
     String? description,
+    String? userId,
   }) async {
     await Future<void>.delayed(simulatedDelay);
     return _resultForInput(
