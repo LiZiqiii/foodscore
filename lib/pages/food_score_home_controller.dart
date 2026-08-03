@@ -7,7 +7,8 @@ class FoodScoreHomeController {
   static const String brandName = 'FoodScore';
   static const String welcomeTitleLine1 = 'Ready to check';
   static const String welcomeTitleLine2 = 'your meal?';
-  static const String welcomeSubtitle = 'Add a photo or describe your meal.';
+  static const String welcomeSubtitleLine1 = 'Add a photo or describe';
+  static const String welcomeSubtitleLine2 = 'your meal.';
 
   static const String ctaLabel = 'Analyse a meal';
   static const String reflectionTitle = 'Weekly Reflection';
@@ -56,11 +57,11 @@ class FoodScoreHomeController {
   static const double heroContentTopGap = 24;
   static const double brandFontSize = 18;
   static const double brandTopInset = 10;
-  static const double welcomeCardHeight = 140;
+  static const double welcomeCardHeight = 152;
   static const double welcomeCardRadius = 16;
-  static const double welcomeTitleFontSize = 24;
+  static const double welcomeTitleFontSize = 26;
   static const double welcomeSubtitleFontSize = 13;
-  static const double welcomeMealImageWidth = 92;
+  static const double welcomeMealImageWidth = 84;
   static const double welcomeToFeaturesGap = 20;
   static const double featuresToCtaGap = 32;
   static const double featureIconBoxSize = 26;

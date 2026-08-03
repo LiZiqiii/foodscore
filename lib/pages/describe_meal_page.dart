@@ -87,23 +87,20 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
         Text(
           DescribeMealPageController.title,
           style: TextStyle(
-            fontSize: 24.sp,
+            fontSize: MealFlowPageStyle.titleFontSize.sp,
             fontWeight: FontWeight.w600,
-            color: DescribeMealPageController.titleColor,
-            height: 1.2,
+            color: MealFlowPageStyle.titleColor,
+            height: MealFlowPageStyle.titleLineHeight,
           ),
         ),
-        SizedBox(height: DescribeMealPageController.titleToSubtitleGap.h),
+        SizedBox(height: MealFlowPageStyle.titleToSubtitleGap.h),
         Text(
           DescribeMealPageController.subtitle,
-          maxLines: 2,
-          softWrap: true,
-          overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: DescribeMealPageController.subtitleFontSize.sp,
+            fontSize: MealFlowPageStyle.subtitleFontSize.sp,
             fontWeight: FontWeight.w400,
-            color: DescribeMealPageController.subtitleColor,
-            height: 20 / 14,
+            color: MealFlowPageStyle.subtitleColor,
+            height: MealFlowPageStyle.subtitleLineHeight,
           ),
         ),
       ],
@@ -121,9 +118,12 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
     return SizedBox(
       width: double.infinity,
       height: DescribeMealPageController.inputHeight.h,
-      child: TextField(
-        controller: _controller,
-        scrollController: _inputScrollController,
+      child: Scrollbar(
+        controller: _inputScrollController,
+        thumbVisibility: true,
+        child: TextField(
+          controller: _controller,
+          scrollController: _inputScrollController,
         keyboardType: TextInputType.multiline,
         textInputAction: TextInputAction.newline,
         maxLines: null,
@@ -173,45 +173,42 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
             ),
           ),
         ),
+        ),
       ),
     );
   }
 
   Widget _buildTipsSection() {
+    final tips = DescribeMealPageController.tips;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final gap = 10.w;
-        final chipWidth = (constraints.maxWidth - gap) / 2;
-        final tips = DescribeMealPageController.tips;
+        final columnWidth = (constraints.maxWidth - gap) / 2;
 
         return Column(
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(
-                  width: chipWidth,
+                  width: columnWidth,
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: _buildTipChip(
                       tips[0],
-                      compact: true,
-                      extraRight: 10,
-                      columnInset:
-                          DescribeMealPageController.tipLeftColumnInset,
+                      indent: DescribeMealPageController.tipLeftColumnInset.w,
                     ),
                   ),
                 ),
                 SizedBox(width: gap),
                 SizedBox(
-                  width: chipWidth,
+                  width: columnWidth,
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: _buildTipChip(
                       tips[1],
-                      compact: true,
-                      extraRight: 10,
-                      columnInset:
-                          DescribeMealPageController.tipRightColumnInset,
+                      indent: DescribeMealPageController.tipRightColumnInset.w,
                     ),
                   ),
                 ),
@@ -219,28 +216,26 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
             ),
             SizedBox(height: DescribeMealPageController.tipRowGap.h),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(
-                  width: chipWidth,
+                  width: columnWidth,
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: _buildTipChip(
                       tips[2],
-                      columnInset:
-                          DescribeMealPageController.tipLeftColumnInset,
+                      indent: DescribeMealPageController.tipLeftColumnInset.w,
                     ),
                   ),
                 ),
                 SizedBox(width: gap),
                 SizedBox(
-                  width: chipWidth,
+                  width: columnWidth,
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: _buildTipChip(
                       tips[3],
-                      columnInset:
-                          DescribeMealPageController.tipRightColumnInset,
-                      extraRight: 8,
+                      indent: DescribeMealPageController.tipRightColumnInset.w,
                     ),
                   ),
                 ),
@@ -252,75 +247,44 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
     );
   }
 
-  Widget _buildTipChip(
-    String label, {
-    bool compact = false,
-    double extraRight = 0,
-    double trimRight = 0,
-    double columnInset = 0,
-  }) {
-    final chip = Container(
-      height: DescribeMealPageController.tipChipHeight.h,
-      padding: EdgeInsets.fromLTRB(
-        DescribeMealPageController.tipChipPaddingH.w,
-        0,
-        (DescribeMealPageController.tipChipPaddingH + extraRight - trimRight)
-            .clamp(4, 999)
-            .w,
-        0,
-      ),
-      decoration: BoxDecoration(
-        color: DescribeMealPageController.tipBg,
-        borderRadius: BorderRadius.circular(50.r),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            '💡',
-            style: TextStyle(
-              fontSize: DescribeMealPageController.tipIconSize.sp,
-              height: 1,
+  Widget _buildTipChip(String label, {double indent = 0}) {
+    return Padding(
+      padding: EdgeInsets.only(left: indent),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: DescribeMealPageController.tipChipPaddingH.w,
+          vertical: 6.h,
+        ),
+        decoration: BoxDecoration(
+          color: DescribeMealPageController.tipBg,
+          borderRadius: BorderRadius.circular(50.r),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '💡',
+              style: TextStyle(
+                fontSize: DescribeMealPageController.tipIconSize.sp,
+                height: 1,
+              ),
             ),
-          ),
-          SizedBox(width: DescribeMealPageController.tipIconGap.w),
-          if (compact)
+            SizedBox(width: DescribeMealPageController.tipIconGap.w),
             Text(
               label,
               maxLines: 1,
+              softWrap: false,
               style: TextStyle(
                 fontSize: DescribeMealPageController.tipFontSize.sp,
                 fontWeight: FontWeight.w400,
                 color: DescribeMealPageController.tipTextColor,
-                height: 1.1,
-              ),
-            )
-          else
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: DescribeMealPageController.tipFontSize.sp,
-                  fontWeight: FontWeight.w400,
-                  color: DescribeMealPageController.tipTextColor,
-                  height: 1.1,
-                ),
+                height: 1.2,
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
-
-    if (columnInset > 0) {
-      return Padding(
-        padding: EdgeInsets.only(left: columnInset.w),
-        child: chip,
-      );
-    }
-
-    return chip;
   }
 
   Widget _buildCtaButton(BuildContext context) {

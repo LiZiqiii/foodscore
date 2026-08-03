@@ -141,6 +141,61 @@ class LocalApiMealRecordService implements MealRecordService {
     }
   }
 
+  @override
+  Future<FoodScoreResult> fetchMealRecordResult({
+    required String userId,
+    required String mealId,
+  }) async {
+    final trimmedUserId = userId.trim();
+    if (trimmedUserId.isEmpty) {
+      throw MealRecordServiceException('User id is empty.');
+    }
+
+    final parsedId = int.tryParse(mealId.trim());
+    if (parsedId == null) {
+      throw MealRecordServiceException('Invalid meal id.');
+    }
+
+    final uri = Uri.parse('$baseUrl/meal-records/$parsedId').replace(
+      queryParameters: {'userId': trimmedUserId},
+    );
+
+    try {
+      final response = await _client.get(uri).timeout(_timeout);
+
+      if (response.statusCode == 404) {
+        throw MealRecordServiceException('Meal record not found.');
+      }
+
+      if (response.statusCode != 200) {
+        throw MealRecordServiceException(_errorMessageFromBody(response));
+      }
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        throw MealRecordServiceException('Invalid meal record response.');
+      }
+
+      final resultJson = decoded['result'];
+      if (resultJson is! Map) {
+        throw MealRecordServiceException('Incomplete meal record in response.');
+      }
+
+      return FoodScoreResult.fromJson(Map<String, dynamic>.from(resultJson));
+    } on MealRecordServiceException {
+      rethrow;
+    } on FormatException catch (error) {
+      throw MealRecordServiceException(
+        'Could not parse meal record response: ${error.message}',
+      );
+    } catch (error) {
+      throw MealRecordServiceException(
+        'Could not reach meal record server at $baseUrl. '
+        'Is the FastAPI backend running? ($error)',
+      );
+    }
+  }
+
   WeeklyReflectionMeal _mealFromBackendJson(Map<String, dynamic> json) {
     final id = json['id'];
     final mealName = json['mealName'];

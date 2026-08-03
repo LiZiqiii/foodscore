@@ -1,9 +1,29 @@
-import 'package:ducafe_ui_core/ducafe_ui_core.dart';
-import 'package:flutter/material.dart';
+import 'dart:io' show Platform;
 
+import 'package:ducafe_ui_core/ducafe_ui_core.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import 'pages/food_score_home_controller.dart';
 import 'pages/login_page.dart';
 
+/// Transparent system bars; page [Scaffold.backgroundColor] fills the bottom inset.
+const _systemUiOverlayStyle = SystemUiOverlayStyle(
+  statusBarColor: Colors.transparent,
+  statusBarIconBrightness: Brightness.dark,
+  systemNavigationBarColor: Colors.transparent,
+  systemNavigationBarDividerColor: Colors.transparent,
+  systemNavigationBarIconBrightness: Brightness.dark,
+  systemNavigationBarContrastEnforced: false,
+);
+
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (!kIsWeb && Platform.isAndroid) {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
+  SystemChrome.setSystemUIOverlayStyle(_systemUiOverlayStyle);
   runApp(const MainApp());
 }
 
@@ -18,14 +38,18 @@ class MainApp extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Exercise App',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-            useMaterial3: true,
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: _systemUiOverlayStyle,
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Exercise App',
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+              useMaterial3: true,
+              scaffoldBackgroundColor: FoodScoreHomeController.backgroundColor,
+            ),
+            home: child,
           ),
-          home: child,
         );
       },
       child: const LoginPage(),

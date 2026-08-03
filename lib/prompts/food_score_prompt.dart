@@ -102,12 +102,14 @@ Rules:
         'Brief paragraph summarising the meal quality assessment.',
     'dimensions':
         'Array of exactly 4 objects — fixed order: Meal Balance, Food Variety, Whole Food Quality, Processing & Concerns.',
+    'insight':
+        'Object with keyInsights: 2–3 synthesis cards (title + description) for Insight tab.',
+    'insight.keyInsights':
+        'Cross-dimension interpretation — no recommendations or action words.',
     'tips':
-        'Array of actionable improvement strings (typically 2–5 items).',
-    'positiveNotes':
-        'Array of encouraging / positive observation strings (typically 1–4 items). First item may be used as the Tips tab hero headline.',
+        'Object with tips: 1–2 actionable strings for Tips tab only.',
     'disclaimer':
-        'Single string — general non-medical disclaimer shown on Tips tab.',
+        'Single string — e.g. meal-level feedback disclaimer on Tips tab.',
   };
 
   /// 每个 dimension 对象的字段说明。
@@ -157,16 +159,24 @@ Rules:
       "feedback": "Low in highly processed ingredients, but the sauce may contain added salt or sugar."
     }
   ],
-  "tips": [
-    "Add a healthy fat such as avocado or walnuts.",
-    "Swap creamy dressing for olive oil and lemon.",
-    "Include an extra vegetable portion for more fibre."
-  ],
-  "positiveNotes": [
-    "Small swaps can push your score from 7 to 8+ with minimal effort.",
-    "Grilled chicken provides lean protein without excess saturated fat."
-  ],
-  "disclaimer": "These are general suggestions based on typical food quality principles. Every person's needs differ. FoodScore is not medical or dietary advice."
+  "insight": {
+    "keyInsights": [
+      {
+        "title": "Solid structure overall",
+        "description": "Lean protein, whole grains, and vegetables together support the balance and variety scores."
+      },
+      {
+        "title": "Dressing uncertainty limits the top score",
+        "description": "The overall score is held back mainly by unknown dressing ingredients rather than the chicken or vegetable base."
+      }
+    ]
+  },
+  "tips": {
+    "tips": [
+      "Try olive oil and lemon instead of creamy dressing, and add avocado or walnuts for a clearer healthy fat source."
+    ]
+  },
+  "disclaimer": "Meal-level feedback only. Not medical or nutrition advice."
 }
 ''';
 
@@ -176,29 +186,23 @@ Rules:
 
   /// PageView index 0 — **Score** tab。
   static const Map<String, String> scoreTabFieldMapping = {
-    'overallScore': 'Hero 圆形分数（OUT OF 10）',
+    'overallScore': 'Hero 分数（OUT OF 100）',
     'overallLabel': '分数下方标签',
     'mealName': '餐食名称',
     'summary': '名称下方摘要段落',
+    'dimensions[].feedback': '各维度 factual 评分依据（无建议用语）',
   };
 
   /// PageView index 1 — **Insight** tab。
   static const Map<String, String> insightTabFieldMapping = {
     'mealName': 'Insight hero 卡片',
     'overallScore': 'Insight hero 右侧分数',
-    'dimensions': 'SCORE BREAKDOWN 维度卡片列表',
-    'dimensions[].name': '维度标题（固定四类之一）',
-    'dimensions[].description': '维度固定说明文案',
-    'dimensions[].score': '维度分数 + 进度条',
-    'dimensions[].label': '分数旁短标签',
-    'dimensions[].feedback': '卡片底部 GPT 反馈',
+    'insight.keyInsights[]': 'KEY INSIGHTS 白色卡片（title + description）',
   };
 
   /// PageView index 2 — **Tips** tab。
   static const Map<String, String> tipsTabFieldMapping = {
-    'positiveNotes[0]': '绿色 Hero「NEXT TIME, TRY」下方标题',
-    'positiveNotes[1..]': '「WHAT THIS MEAL DOES WELL」正向条目列表',
-    'tips[]': '白色建议卡片中的改进建议',
+    'tips.tips[]': '1–2 条可执行建议（白色 lightbulb 卡片）',
     'disclaimer': '底部 Remember 免责声明',
   };
 

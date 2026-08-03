@@ -17,7 +17,7 @@ class WeeklyReflectionController {
   static const String smallFocusTitle = 'Gentle focus';
   static const String summaryLoadingLabel = 'Preparing your weekly summary…';
 
-  static const Color backgroundColor = Color(0xFFF6FAF0);
+  static const Color backgroundColor = Color(0xFFF8FAF5);
   static const Color backColor = Color(0xFF1A6731);
   static const Color titleColor = Color(0xFF4A4B48);
   static const Color subtitleColor = Color(0xFF878984);

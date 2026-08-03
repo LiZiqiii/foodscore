@@ -10,18 +10,17 @@ class UploadMealPhotoController {
   static const String uploadHint = 'Tap to choose in Photos or take photo';
   static const String descriptionLabel = 'Add a description ';
   static const String descriptionOptional = '(optional — improves accuracy)';
-  static const String descriptionHint =
-      'e.g. Grilled salmon with roasted broccoli and brown rice, with a lemon dressing.';
+  static const String descriptionHint = 'eg. With added BBQ sauce.';
   static const String ctaLabel = 'Continue';
   static const String disclaimerLine1 = 'Approximate meal-level feedback.';
   static const String disclaimerLine2 =
       'Not medical advice or precise nutrient calculation.';
 
   // 颜色
-  static const Color backgroundColor = Color(0xFFF6FAF0);
+  static const Color backgroundColor = Color(0xFFF8FAF5);
   static const Color backColor = Color(0xFF1A6731);
   static const Color titleColor = Color(0xB3000000);
-  static const Color subtitleColor = Color(0x73000000);
+  static const Color subtitleColor = Color(0x99000000);
   static const Color uploadAreaBorder = Color(0xFFBFD6CC);
   /// #F4FFFE 67% 叠在 #F6FAF0 上的不透明等效色
   static const Color uploadAreaBg = Color(0xFFF5FDF9);
@@ -44,10 +43,10 @@ class UploadMealPhotoController {
   static const double backToTitleGap = 18;
   static const double titleToSubtitleGap = 14;
   static const double subtitleToUploadGap = 28;
-  static const double subtitleFontSize = 14;
+  static const double subtitleFontSize = 13;
   static const double uploadIconSize = 32;
   static const double uploadIconToHintGap = 15;
-  static const double uploadAreaHeight = 130;
+  static const double uploadAreaHeight = 148;
   static const double uploadAreaRadius = 12;
   static const double descriptionLabelToOptionalGap = 9;
   static const double optionalToInputGap = 7;
@@ -55,6 +54,7 @@ class UploadMealPhotoController {
   static const double descriptionInputPaddingH = 14;
   static const double descriptionInputPaddingV = 12;
   static const double descriptionInputFontSize = 14;
+  static const double descriptionHintFontSize = 13;
   static const double descriptionInputLineHeight = 25 / 14;
   static const double descriptionInputRadiusTL = 16;
   static const double descriptionInputRadiusTR = 19;

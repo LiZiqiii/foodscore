@@ -36,6 +36,7 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
   }
 
   Future<void> _pickImage() async {
+    // No maxWidth / maxHeight / imageQuality — keep the user's original file for API upload.
     final image = await _imagePicker.pickImage(source: ImageSource.gallery);
     if (!mounted || image == null) {
       return;
@@ -117,23 +118,20 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
         Text(
           UploadMealPhotoController.title,
           style: TextStyle(
-            fontSize: 24.sp,
+            fontSize: MealFlowPageStyle.titleFontSize.sp,
             fontWeight: FontWeight.w600,
-            color: UploadMealPhotoController.titleColor,
-            height: 1.2,
+            color: MealFlowPageStyle.titleColor,
+            height: MealFlowPageStyle.titleLineHeight,
           ),
         ),
-        SizedBox(height: UploadMealPhotoController.titleToSubtitleGap.h),
+        SizedBox(height: MealFlowPageStyle.titleToSubtitleGap.h),
         Text(
-          UploadMealPhotoController.subtitle,
-          maxLines: 1,
-          softWrap: false,
-          overflow: TextOverflow.ellipsis,
+          UploadMealPhotoController.subtitle.trim(),
           style: TextStyle(
-            fontSize: UploadMealPhotoController.subtitleFontSize.sp,
+            fontSize: MealFlowPageStyle.subtitleFontSize.sp,
             fontWeight: FontWeight.w400,
-            color: UploadMealPhotoController.subtitleColor,
-            height: 1.2,
+            color: MealFlowPageStyle.subtitleColor,
+            height: MealFlowPageStyle.subtitleLineHeight,
           ),
         ),
       ],
@@ -179,29 +177,38 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
   }
 
   Widget _buildUploadPlaceholder() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.add_a_photo_outlined,
-          size: UploadMealPhotoController.uploadIconSize.sp,
-          color: UploadMealPhotoController.uploadIconColor,
-        ),
-        SizedBox(height: UploadMealPhotoController.uploadIconToHintGap.h),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: Text(
-            UploadMealPhotoController.uploadHint,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-              color: UploadMealPhotoController.uploadHintColor,
-              height: 25 / 14,
-            ),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      child: Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.add_a_photo_outlined,
+                size: UploadMealPhotoController.uploadIconSize.sp,
+                color: UploadMealPhotoController.uploadIconColor,
+              ),
+              SizedBox(
+                height: UploadMealPhotoController.uploadIconToHintGap.h,
+              ),
+              Text(
+                UploadMealPhotoController.uploadHint,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
+                  color: UploadMealPhotoController.uploadHintColor,
+                  height: 1.25,
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -237,58 +244,62 @@ class _UploadMealPhotoPageState extends State<UploadMealPhotoPage> {
       child: SizedBox(
         width: double.infinity,
         height: UploadMealPhotoController.descriptionInputHeight.h,
-        child: TextField(
-          controller: _descriptionController,
-          scrollController: _descriptionScrollController,
-          keyboardType: TextInputType.multiline,
-          textInputAction: TextInputAction.newline,
-          maxLines: null,
-          expands: true,
-          textAlignVertical: TextAlignVertical.top,
-        style: TextStyle(
-          fontSize: UploadMealPhotoController.descriptionInputFontSize.sp,
-          fontWeight: FontWeight.w400,
-          color: DescribeMealPageController.inputTextColor,
-          height: DescribeMealPageController.inputLineHeight,
-        ),
-        decoration: InputDecoration(
-          hintText: UploadMealPhotoController.descriptionHint,
-          hintStyle: TextStyle(
-            fontSize: UploadMealPhotoController.descriptionInputFontSize.sp,
-            fontWeight: FontWeight.w400,
-            color: DescribeMealPageController.inputHintColor,
-            height: DescribeMealPageController.inputLineHeight,
-          ),
-          filled: true,
-          fillColor: DescribeMealPageController.inputBg,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: DescribeMealPageController.inputPaddingH.w,
-            vertical: DescribeMealPageController.inputPaddingV.h,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: radius,
-            borderSide: const BorderSide(
-              color: DescribeMealPageController.inputBorderColor,
-              width: 1,
+        child: Scrollbar(
+          controller: _descriptionScrollController,
+          thumbVisibility: true,
+          child: TextField(
+            controller: _descriptionController,
+            scrollController: _descriptionScrollController,
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.newline,
+            maxLines: null,
+            expands: true,
+            textAlignVertical: TextAlignVertical.top,
+            style: TextStyle(
+              fontSize: UploadMealPhotoController.descriptionInputFontSize.sp,
+              fontWeight: FontWeight.w400,
+              color: DescribeMealPageController.inputTextColor,
+              height: DescribeMealPageController.inputLineHeight,
             ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: radius,
-            borderSide: BorderSide(
-              color: DescribeMealPageController.backColor.withValues(
-                alpha: 0.35,
+            decoration: InputDecoration(
+              hintText: UploadMealPhotoController.descriptionHint,
+              hintStyle: TextStyle(
+                fontSize: UploadMealPhotoController.descriptionHintFontSize.sp,
+                fontWeight: FontWeight.w400,
+                color: DescribeMealPageController.inputHintColor,
+                height: DescribeMealPageController.inputLineHeight,
               ),
-              width: 1,
+              filled: true,
+              fillColor: DescribeMealPageController.inputBg,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: DescribeMealPageController.inputPaddingH.w,
+                vertical: DescribeMealPageController.inputPaddingV.h,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: radius,
+                borderSide: const BorderSide(
+                  color: DescribeMealPageController.inputBorderColor,
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: radius,
+                borderSide: BorderSide(
+                  color: DescribeMealPageController.backColor.withValues(
+                    alpha: 0.35,
+                  ),
+                  width: 1,
+                ),
+              ),
+              border: OutlineInputBorder(
+                borderRadius: radius,
+                borderSide: const BorderSide(
+                  color: DescribeMealPageController.inputBorderColor,
+                  width: 1,
+                ),
+              ),
             ),
           ),
-          border: OutlineInputBorder(
-            borderRadius: radius,
-            borderSide: const BorderSide(
-              color: DescribeMealPageController.inputBorderColor,
-              width: 1,
-            ),
-          ),
-        ),
         ),
       ),
     );

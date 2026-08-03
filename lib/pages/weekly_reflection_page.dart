@@ -4,8 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../config/app_config.dart';
 import '../config/page_layout.dart';
+import '../data/food_score_mock_data.dart';
+import '../models/food_score_result.dart';
 import '../models/user_profile.dart';
 import '../models/weekly_reflection_meal.dart';
+import '../services/meal_record_service.dart';
 import '../services/meal_record_service_factory.dart';
 import '../services/user_profile_service_factory.dart';
 import '../services/weekly_reflection_format.dart';
@@ -16,6 +19,7 @@ import '../services/weekly_reflection_summary_cache.dart';
 import '../services/weekly_reflection_summary_service_factory.dart';
 import '../widgets/app_spot_illustration.dart';
 import '../widgets/page_back_button.dart';
+import 'result_page.dart';
 import 'share_meal_page.dart';
 import 'weekly_reflection_controller.dart';
 
@@ -33,6 +37,7 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
   UserProfile? _coachingProfile;
   bool _summaryLoading = false;
   bool _mealsLoading = false;
+  String? _openingMealId;
 
   @override
   void initState() {
@@ -90,6 +95,7 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
       WeeklyReflectionStore.instance.replaceMealsFromBackend(meals);
     } catch (error) {
       debugPrint('Failed to load meal records from backend: $error');
+      WeeklyReflectionStore.instance.clear();
     }
 
     if (!mounted) {
@@ -387,7 +393,7 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
             SizedBox(height: 14.h),
             for (var i = 0; i < meals.length; i++) ...[
               if (i > 0) SizedBox(height: 12.h),
-              _buildMealCard(meals[i]),
+              _buildMealCard(context, meals[i]),
             ],
             SizedBox(height: 28.h),
           ],
@@ -488,65 +494,199 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
     );
   }
 
-  Widget _buildMealCard(WeeklyReflectionMeal meal) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 14.h),
-      decoration: BoxDecoration(
-        color: WeeklyReflectionController.cardBg,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: WeeklyReflectionController.cardBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8.r,
-            offset: Offset(0, 2.h),
+  Future<void> _openHistoricalFeedback(WeeklyReflectionMeal meal) async {
+    if (_openingMealId != null) {
+      return;
+    }
+
+    setState(() => _openingMealId = meal.id);
+
+    try {
+      final result = await _loadMealResult(meal);
+      if (!mounted) {
+        return;
+      }
+      if (result == null) {
+        _showFeedbackLoadError();
+        return;
+      }
+
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => ResultPage(
+            result: result,
+            fromHistory: true,
           ),
-        ],
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _openingMealId = null);
+      }
+    }
+  }
+
+  Future<FoodScoreResult?> _loadMealResult(WeeklyReflectionMeal meal) async {
+    final cached = WeeklyReflectionStore.instance.cachedResultFor(meal.id);
+    if (cached != null) {
+      return _resultWithMealName(cached, meal.mealName);
+    }
+
+    if (AppConfig.useMockResult) {
+      return _mockResultForMeal(meal);
+    }
+
+    final service = createMealRecordService();
+    if (service == null) {
+      return null;
+    }
+
+    try {
+      final result = await service.fetchMealRecordResult(
+        userId: currentUserId,
+        mealId: meal.id,
+      );
+      WeeklyReflectionStore.instance.cacheResult(meal.id, result);
+      return result;
+    } on MealRecordServiceException catch (error) {
+      debugPrint('Failed to load meal feedback: ${error.message}');
+      return null;
+    } catch (error) {
+      debugPrint('Failed to load meal feedback: $error');
+      return null;
+    }
+  }
+
+  FoodScoreResult _mockResultForMeal(WeeklyReflectionMeal meal) {
+    final base = FoodScoreMockData.resolve(AppConfig.mockResultScenario);
+    return FoodScoreResult(
+      mealName: meal.mealName,
+      overallScore: base.overallScore,
+      overallLabel: base.overallLabel,
+      summary: meal.summary.trim().isNotEmpty ? meal.summary : base.summary,
+      dimensions: base.dimensions,
+      keyInsights: base.keyInsights,
+      mealTips: base.mealTips,
+      disclaimer: base.disclaimer,
+    );
+  }
+
+  FoodScoreResult _resultWithMealName(
+    FoodScoreResult result,
+    String mealName,
+  ) {
+    if (result.mealName.trim() == mealName.trim()) {
+      return result;
+    }
+    return FoodScoreResult(
+      mealName: mealName,
+      overallScore: result.overallScore,
+      overallLabel: result.overallLabel,
+      summary: result.summary,
+      dimensions: result.dimensions,
+      keyInsights: result.keyInsights,
+      mealTips: result.mealTips,
+      disclaimer: result.disclaimer,
+    );
+  }
+
+  void _showFeedbackLoadError() {
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Could not load meal feedback. Please try again.'),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            meal.mealName,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inriaSerif(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w700,
-              color: WeeklyReflectionController.titleColor,
-              height: 1.25,
-            ),
-          ),
-          SizedBox(height: 6.h),
-          Text(
-            WeeklyReflectionFormat.dayAndTime(meal.savedAt),
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w500,
-              color: WeeklyReflectionController.cardMetaColor,
-              height: 1.2,
-            ),
-          ),
-          SizedBox(height: 10.h),
-          Wrap(
-            spacing: 6.w,
-            runSpacing: 6.h,
-            children: [
-              for (final tag in meal.tags) _buildTagChip(tag),
+    );
+  }
+
+  Widget _buildMealCard(BuildContext context, WeeklyReflectionMeal meal) {
+    final isOpening = _openingMealId == meal.id;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isOpening ? null : () => _openHistoricalFeedback(meal),
+        borderRadius: BorderRadius.circular(16.r),
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 14.h),
+          decoration: BoxDecoration(
+            color: WeeklyReflectionController.cardBg,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(color: WeeklyReflectionController.cardBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8.r,
+                offset: Offset(0, 2.h),
+              ),
             ],
           ),
-          SizedBox(height: 10.h),
-          Text(
-            meal.status,
-            style: TextStyle(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w500,
-              color: WeeklyReflectionController.statusColor,
-              height: 1.2,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      meal.mealName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inriaSerif(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: WeeklyReflectionController.titleColor,
+                        height: 1.25,
+                      ),
+                    ),
+                  ),
+                  if (isOpening) ...[
+                    SizedBox(width: 8.w),
+                    SizedBox(
+                      width: 16.w,
+                      height: 16.w,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: WeeklyReflectionController.backColor,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                WeeklyReflectionFormat.dayAndTime(meal.savedAt),
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w500,
+                  color: WeeklyReflectionController.cardMetaColor,
+                  height: 1.2,
+                ),
+              ),
+              SizedBox(height: 10.h),
+              Wrap(
+                spacing: 6.w,
+                runSpacing: 6.h,
+                children: [
+                  for (final tag in meal.tags) _buildTagChip(tag),
+                ],
+              ),
+              SizedBox(height: 10.h),
+              Text(
+                meal.status,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w500,
+                  color: WeeklyReflectionController.statusColor,
+                  height: 1.2,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

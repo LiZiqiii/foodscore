@@ -49,17 +49,44 @@ List<FoodScoreInsightItem> parseFoodScoreInsightList(dynamic value) {
   return items;
 }
 
-/// Parses positiveNotes as a single paragraph; returns '' when missing or invalid.
-/// Accepts a legacy JSON array of strings by joining them into one paragraph.
-String parsePositiveNotes(dynamic value) {
-  if (value == null) {
-    return '';
+/// Parses meal action tips from nested `tips.tips` or legacy root string.
+List<String> parseMealActionTips(Map<String, dynamic> json) {
+  final tipsField = json['tips'];
+  if (tipsField is Map) {
+    final map = tipsField is Map<String, dynamic>
+        ? tipsField
+        : Map<String, dynamic>.from(tipsField);
+    final list = map['tips'];
+    if (list is List) {
+      return list
+          .whereType<String>()
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
   }
-  if (value is String) {
-    return value;
+  if (tipsField is String && tipsField.trim().isNotEmpty) {
+    return [tipsField.trim()];
   }
-  if (value is List) {
-    return value.whereType<String>().where((s) => s.trim().isNotEmpty).join(' ');
+  return const [];
+}
+
+/// Parses `insight.keyInsights` with legacy fallback from does-well / improved lists.
+List<FoodScoreInsightItem> parseKeyInsights(Map<String, dynamic> json) {
+  final insight = json['insight'];
+  if (insight is Map) {
+    final map = insight is Map<String, dynamic>
+        ? insight
+        : Map<String, dynamic>.from(insight);
+    final parsed = parseFoodScoreInsightList(map['keyInsights']);
+    if (parsed.isNotEmpty) {
+      return parsed;
+    }
   }
-  return '';
+
+  final legacy = <FoodScoreInsightItem>[
+    ...parseFoodScoreInsightList(json['whatThisMealDoesWell']),
+    ...parseFoodScoreInsightList(json['whatCouldBeImproved']),
+  ];
+  return legacy;
 }

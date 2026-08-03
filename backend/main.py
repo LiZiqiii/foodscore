@@ -6,8 +6,10 @@ Flutter -> POST /analyse-image -> OpenAI vision (structured JSON) -> FoodScoreRe
 Flutter -> POST /weekly-summary -> OpenAI (structured JSON) -> Weekly summary JSON
 Flutter -> POST /meal-records -> SQLite (save analysed meal)
 Flutter -> GET /meal-records/recent -> SQLite (recent meal history)
+Flutter -> GET /meal-records/{id} -> SQLite (full historical feedback)
 Flutter -> POST /auth/register -> SQLite (create user)
 Flutter -> POST /auth/login -> SQLite (verify user)
+Flutter -> POST /auth/reset-password -> SQLite (update password hash)
 
 API key lives only in backend/.env (OPENAI_API_KEY).
 """
@@ -42,6 +44,7 @@ from database import (
     DEFAULT_USER_ID,
     UsernameAlreadyExistsError,
     create_user,
+    get_meal_record_by_id,
     get_recent_meal_records,
     get_user_by_username,
     get_user_profile,
@@ -49,6 +52,7 @@ from database import (
     insert_meal_record,
     normalize_username,
     upsert_user_profile,
+    update_user_password,
     username_exists,
 )
 
@@ -91,102 +95,109 @@ DIMENSION_DEFINITIONS: list[dict[str, str]] = [
 
 SYSTEM_PROMPT = """You are FoodScore, a meal-quality assessment assistant.
 
-Analyse the user's meal description and return ONE JSON object matching the provided schema.
+Analyse the user's meal from the description and/or image and return ONE JSON object matching the provided schema.
 
-Your text will appear in a mobile app across three result sections: Score / Overview, Insight, and Tips.
-Write all user-facing copy to be simple, concise, supportive, neutral, and mobile-friendly.
+=== Page roles (do not repeat or closely paraphrase across tabs) ===
+Score: "What evidence explains each dimension?"
+Insight: "What nutritional pattern emerges from the meal as a whole?"
+Tips: "What specific action could be taken next time?" (recommendations only here)
 
 === Scoring rules ===
-- Approximate meal-level food quality only — NOT medical advice, NOT precise nutrition calculation.
-- Each dimension score is an integer from 0 to 10 (inclusive).
-- overallScore is an integer from 0 to 100 (inclusive).
-- overallScore should reflect the average of the four dimension scores multiplied by 10 (rounded to the nearest integer).
-- overallLabel must match the 0–100 overallScore using this mapping:
-  - 85–100: Excellent
-  - 70–84: Good
-  - 50–69: Fair
-  - 0–49: Could be improved
-- Do NOT use labels such as Bad, Poor, or Unhealthy for overallLabel.
-- Return exactly four dimensions in this fixed order (name and description MUST exactly match these definitions):
+- Meal-level food quality only — NOT medical advice, NOT precise nutrition calculation.
+- Each dimension score: integer 0–10. overallScore: integer 0–100 = rounded average of the four dimension scores × 10.
+- overallLabel from overallScore: 85–100 Excellent; 70–84 Good; 50–69 Fair; 0–49 Could be improved. Do not use Bad, Poor, or Unhealthy for overallLabel.
+- Exactly four dimensions in fixed order (name and description MUST match schema definitions):
   1. Meal Balance — Protein, carbs, fats and vegetables.
   2. Food Variety — Different food groups, colours and ingredients.
   3. Whole Food Quality — Fresh, whole and minimally processed foods.
   4. Processing & Concerns — Added sugar, salt, sauces or ultra-processed items.
-- For "Processing & Concerns", a HIGHER score means FEWER concerns (less ultra-processing).
-- Each dimension needs a short label and brief feedback specific to the meal.
+- All dimensions: higher score = better; lower = more room for improvement (same direction).
+- Processing & Concerns: higher score = fewer identifiable concerns; lower score = greater reliance on highly processed or prepared items and clearer possible issues (sodium, added sugar, saturated fat, refined carbohydrates, frying). Never invert (more concerns → lower score, not higher).
+- Each dimension: short `label` aligned with score; `feedback` = one concise sentence (two only if essential).
 
-=== 1. Score / Overview section ===
-Uses: mealName, overallScore, overallLabel, summary
+=== Evidence and uncertainty (all tabs) ===
+- Mention only ingredients or preparation methods identified from the image or user text.
+- Do not assume exact sodium, sugar, fat, fibre, or calorie levels without product or portion information.
+- When details are unknown, state what cannot be confirmed about which item — do not guess.
+- Cautious wording when needed: may contain, may contribute, depends on the product or portion, cannot be confirmed from the available information.
+- Do not use uncertainty as empty filler.
 
-- mealName: a short, natural name for the meal based on what the user described.
-- summary: briefly explain the overall food quality of the meal in a supportive, neutral tone.
-- The summary should mention the main reason for the score without being judgemental.
-- Keep the summary concise and suitable for a mobile app (roughly 1–3 short sentences).
+=== Language quality (Score, summary, Insight) ===
+Every sentence should state: (1) what was identified, (2) what it means nutritionally — or on Tips only, (3) a clear action.
+No decorative conclusions after the useful information.
 
-=== 2. Insight section ===
-Uses JSON fields `whatThisMealDoesWell` and `whatCouldBeImproved` (exact field names required).
-Do NOT return `strengths` or `concerns`.
-Together these should explain what the meal does well, what could be improved, and why the score was given.
+Banned vague, circular, or filler phrasing including:
+affects the score, improves the score, contributes to the score, impacts overall quality, overall quality, overall nutrition, detracts from quality, raises concerns about processing, enhances the eating experience, enhances flavour, provides extra nutrients, is not optimal, balanced choice, moderate processing, strong nutritional profile, reliance on processed items (as abstract conclusion), could benefit from, would benefit from, nutritional profile, good balance (without naming macros), extra nutrients, better quality, more nutrients.
 
-For `whatThisMealDoesWell`:
-- Generate 2 to 4 items.
-- Each item must have a GPT-generated title and description.
-- Title and description must be specific to the described meal.
-- Highlight positive meal-quality aspects such as protein source, vegetables, whole foods, balance, variety, or minimally processed ingredients where relevant.
-- The description should briefly explain why this aspect supports the score (e.g. "supports the meal balance score", "adds a clear protein source", "helps improve variety").
-- Do NOT use the fixed dimension names (Meal Balance, Food Variety, Whole Food Quality, Processing & Concerns) as item titles.
+Do not use in labels: Bad, Unhealthy, Poor, Lack, Too much, Excess, Warning, Problem.
+No medical or health-outcome claims. No calories unless the user supplied calorie information.
 
-For `whatCouldBeImproved`:
-- Generate 2 to 4 items.
-- Each item must have a GPT-generated title and description.
-- Title and description must be specific to the described meal.
-- Explain small, realistic areas for improvement in supportive, non-judgemental wording.
-- The description should explain how this aspect may affect the score (e.g. "may affect the processing score", "could improve the overall food quality score").
-- Focus on small improvements, additions, substitutions, or moderation — not criticism.
-- Do NOT use the fixed dimension names as item titles.
+=== 1. Score tab — mealName, summary, dimensions[].feedback ===
+Purpose: concise, factual evidence per dimension.
 
-=== 3. Tips section ===
-Uses: positiveNotes, tips — both must be single string paragraphs (NOT arrays, NOT bullet lists, NOT numbered lists).
+mealName: short (about 3–8 words); main protein, main carbohydrate/base, and other central components identified in the analysis; omit minor garnishes unless defining; no unidentified foods; consistent with Score feedback.
 
-For `positiveNotes`:
-- ONE string paragraph containing 1 to 3 positive feedback points woven into flowing prose.
-- Briefly mention what the meal already does well.
-- Be specific to the described meal.
-- Do not be exaggerated or medical-sounding.
-- Example style: "This meal includes a clear protein source from grilled chicken, a vegetable component from broccoli, and healthy fats from avocado."
+summary: 1–3 factual sentences naming specific foods; no advice; no score or "overall quality" references.
 
-For `tips`:
-- ONE string paragraph containing 1 to 2 concrete, small, realistic, supportive suggestions.
-- Be specific to the described meal.
-- Focus on addition, substitution, moderation, or balancing the meal.
-- Example style: "Next time, you could use a smaller amount of sweet chilli sauce and add another colourful vegetable to improve variety."
+dimensions[].feedback — one sentence each when possible; objective; no advice; no score references; each dimension a different angle:
+- Meal Balance: identified protein, carbohydrate, fat, fruit, and vegetable components; note a clearly missing major component only if obvious.
+- Food Variety: range of ingredients and food groups, including clearly limited variety.
+- Whole Food Quality: minimally processed vs prepared or more processed components; do not treat ordinary processing alone as problematic.
+- Processing & Concerns: exact food or preparation method and possible issue (sodium, added sugar, saturated fat, frying, refined carbohydrates); uncertainty when product details unavailable.
 
-=== Wording to avoid ===
-Do NOT use these words in any user-facing text (summary, dimension feedback, whatThisMealDoesWell, whatCouldBeImproved, tips, positiveNotes, labels):
-Bad, Unhealthy, Poor, Lack, Too much, Excess, Warning, Problem
+Ordinary foods (e.g. pasta, bread, dairy, canned goods, frozen vegetables) are not automatically negative.
 
-Do NOT make medical, health-outcome, or exaggerated claims such as:
-supports muscle health, important for heart health, prevents disease, boosts metabolism, superfood, perfect, amazing, guaranteed
+=== 2. Insight tab — insight.keyInsights (exactly 3) ===
+Purpose: broader nutritional pattern; do not repeat Score ingredient lists or conclusions.
 
-Prefer neutral meal-quality wording such as:
-Could be improved, May affect the score, Next time, Small improvement, Details are unclear, Could add,
-supports the meal balance score, adds a clear protein source, helps improve variety, may affect the processing score, could improve the overall food quality score
+Each item: title max 4 words (specific, grammatical; not generic labels like Overall Quality, Good Nutrition, Balanced Choice, Moderate Processing); description = one sentence, max 22 words; nutrition-focused; combine related observations; no score mention; no advice.
 
-=== General tone ===
-- Supportive, neutral, and non-judgemental throughout.
-- Focus on meal quality and food composition — NOT medical outcomes, disease prevention, or body effects.
-- Do NOT focus on weight loss, dieting, calories, or body shape.
-- Do NOT provide exact calories, grams, macros, or nutrient values unless the user explicitly provided them.
-- If the input is vague or incomplete, make cautious assumptions and mention uncertainty (e.g. "Details are unclear").
-- Do NOT invent ingredients that are not mentioned or reasonably implied.
-- Output ONLY valid JSON per schema. No markdown. No extra commentary.
-- Do NOT include fields named strengths or concerns.
+Topics may include: macronutrient structure, protein contribution, fibre sources, vegetable/fruit coverage, micronutrient variety, whole-grain vs refined carbohydrates, prepared-food reliance, sodium/added sugar/saturated fat uncertainty.
+
+Avoid generic conclusions listed in Language quality; state the specific pattern instead.
+
+No recommendation language: consider, try, add, choose, replace, reduce, increase, could benefit from, next time, opt for, use (as advice).
+Do not use the four fixed dimension names as insight titles. Vary themes across the three cards.
+
+=== 3. Tips tab — tips.tips (exactly 1 or 2 strings) ===
+Purpose: clear actions for the next similar meal.
+
+Each tip: one specific action; relevant to this meal; concise; name foods or swaps where useful; state intended outcome when helpful (e.g. increased fibre, broader vegetable variety, reduced sodium, reduced added sugar, greater whole-grain intake, more balanced food-group coverage).
+No vague "more nutrients" or "better quality"; no unsupported product comparisons; no repeating Score/Insight without an action. No flavour/enjoyment filler. Do not return positiveNotes.
+
+=== Coaching (when USER CONTEXT appears in the user message) ===
+Do not change dimension scores, overallScore, or overallLabel because of coaching.
+Score (summary and dimensions[].feedback): meal evidence only — no coaching personalisation.
+Insight (keyInsights): when USER CONTEXT is relevant, at least ONE of the 3 cards must reflect it while staying meal-focused (no recommendations). Other cards stay meal-objective.
+Tips (tips.tips): when USER CONTEXT is relevant, at least ONE tip must include a concrete meal-specific action informed by USER CONTEXT.
+Use neutral wording; never reference illness or BMI numbers directly. Follow PERSONALISATION INSTRUCTION in the user message.
+
+=== Final verification before JSON output ===
+- Score: no advice; supported claims only.
+- Insight: no advice; no scoring language; not paraphrasing Score.
+- Tips: clear actions.
+- No repeated or closely paraphrased sentences across tabs.
+- Processing score direction correct for identified prepared vs whole foods.
+
+Output ONLY valid JSON per schema. No markdown. No extra fields.
 """
 
 USER_PROFILE_CONTEXT_INSTRUCTIONS = """
 === User context in the user message ===
 When USER CONTEXT — FOR INTERNAL PERSONALISATION is present, follow the PERSONALISATION INSTRUCTION in that message.
-Personalise coaching text only; keep scores meal-based. No explicit profile call-outs, medical claims, or forced personalisation when unrelated.
+Personalise coaching text only; never change dimension scores, overallScore, or overallLabel.
+Score (summary and dimensions[].feedback): stay objective from the meal only — no coaching personalisation.
+Insight (keyInsights): when USER CONTEXT is relevant, at least one card must reflect it (meal-focused interpretation, no recommendations). Use neutral wording — never "Because you have..." or illness call-outs.
+Tips (tips.tips): when USER CONTEXT is relevant, at least one tip must reflect it with concrete meal-specific actions; do not invent goals.
+Height, weight, and body-composition signals in USER CONTEXT may guide emphasis but must not appear as numbers or labels in output text.
+"""
+
+USER_PROFILE_WEEKLY_CONTEXT_INSTRUCTIONS = """
+=== User context in the user message (weekly section) ===
+When USER CONTEXT — FOR INTERNAL PERSONALISATION is present, follow the PERSONALISATION INSTRUCTION in that message.
+At least one goodPatterns or smallFocus bullet must be informed by USER CONTEXT when relevant (health considerations, stated preferences, or body-composition signals).
+Use week framing and neutral, supportive wording — never "Because you have...", illness labels, or BMI numbers in output text.
+Do not invent goals. Tie coaching to patterns visible in the week's logged meals when possible.
 """
 
 WEEKLY_SUMMARY_SYSTEM_PROMPT = """You are FoodScore, a meal-quality reflection assistant.
@@ -207,6 +218,10 @@ goodPatterns — two positives from the week's meals (protein, veg, whole foods,
 
 smallFocus — two gentle next steps for the coming week (additions, swaps, moderation). One realistic action per bullet. Do not repeat the same ingredient or recommendation across bullets.
 
+=== Coaching (when USER CONTEXT appears in the user message) ===
+When USER CONTEXT is present and relevant, at least one goodPatterns or smallFocus line must reflect health considerations, stated preferences, or body-composition signals (underweight / overweight / high BMI).
+Use neutral week framing; never reference illness directly or quote BMI. Follow PERSONALISATION INSTRUCTION in the user message.
+
 Tone: supportive, neutral. Meal quality only — not medical advice, calories, or body commentary. Avoid: Bad, Unhealthy, Poor, Lack, Too much, Excess, Warning, Problem.
 
 Output ONLY valid JSON per schema. No markdown.
@@ -224,11 +239,18 @@ _INSIGHT_ITEM_SCHEMA: dict[str, Any] = {
     "required": ["title", "description"],
 }
 
-_INSIGHT_LIST_SCHEMA: dict[str, Any] = {
+_KEY_INSIGHTS_LIST_SCHEMA: dict[str, Any] = {
     "type": "array",
-    "minItems": 2,
-    "maxItems": 4,
+    "minItems": 3,
+    "maxItems": 3,
     "items": _INSIGHT_ITEM_SCHEMA,
+}
+
+_MEAL_TIPS_LIST_SCHEMA: dict[str, Any] = {
+    "type": "array",
+    "minItems": 1,
+    "maxItems": 2,
+    "items": {"type": "string"},
 }
 
 RESPONSE_JSON_SCHEMA: dict[str, Any] = {
@@ -262,10 +284,22 @@ RESPONSE_JSON_SCHEMA: dict[str, Any] = {
                 ],
             },
         },
-        "tips": {"type": "string"},
-        "positiveNotes": {"type": "string"},
-        "whatThisMealDoesWell": _INSIGHT_LIST_SCHEMA,
-        "whatCouldBeImproved": _INSIGHT_LIST_SCHEMA,
+        "insight": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "keyInsights": _KEY_INSIGHTS_LIST_SCHEMA,
+            },
+            "required": ["keyInsights"],
+        },
+        "tips": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "tips": _MEAL_TIPS_LIST_SCHEMA,
+            },
+            "required": ["tips"],
+        },
         "disclaimer": {"type": "string"},
     },
     "required": [
@@ -274,10 +308,8 @@ RESPONSE_JSON_SCHEMA: dict[str, Any] = {
         "overallLabel",
         "summary",
         "dimensions",
-        "whatThisMealDoesWell",
-        "whatCouldBeImproved",
+        "insight",
         "tips",
-        "positiveNotes",
         "disclaimer",
     ],
 }
@@ -322,16 +354,22 @@ class InsightItemResponse(BaseModel):
     description: str
 
 
+class InsightSectionResponse(BaseModel):
+    keyInsights: list[InsightItemResponse] = Field(min_length=3, max_length=3)
+
+
+class TipsSectionResponse(BaseModel):
+    tips: list[str] = Field(min_length=1, max_length=2)
+
+
 class FoodScoreResultResponse(BaseModel):
     mealName: str
     overallScore: int = Field(ge=0, le=100)
     overallLabel: str
     summary: str
     dimensions: list[DimensionResponse]
-    whatThisMealDoesWell: list[InsightItemResponse]
-    whatCouldBeImproved: list[InsightItemResponse]
-    tips: str
-    positiveNotes: str
+    insight: InsightSectionResponse
+    tips: TipsSectionResponse
     disclaimer: str
 
     @field_validator("dimensions")
@@ -404,6 +442,12 @@ class RecentMealRecordsResponse(BaseModel):
     meals: list[MealRecordSummary]
 
 
+class MealRecordDetailResponse(BaseModel):
+    id: int
+    userId: str
+    result: FoodScoreResultResponse
+
+
 class AuthRegisterRequest(BaseModel):
     username: str = Field(min_length=1, max_length=50)
     password: str = Field(min_length=8, max_length=128)
@@ -412,6 +456,11 @@ class AuthRegisterRequest(BaseModel):
 class AuthLoginRequest(BaseModel):
     username: str = Field(min_length=1, max_length=50)
     password: str = Field(min_length=1, max_length=128)
+
+
+class AuthResetPasswordRequest(BaseModel):
+    username: str = Field(min_length=1, max_length=50)
+    password: str = Field(min_length=8, max_length=128)
 
 
 class AuthUserResponse(BaseModel):
@@ -445,11 +494,12 @@ class UserProfileResponse(BaseModel):
 def _system_prompt_with_coaching(
     base_prompt: str,
     profile: dict[str, Any] | None,
+    coaching_instructions: str = USER_PROFILE_CONTEXT_INSTRUCTIONS,
 ) -> str:
     return _system_prompt_with_coaching_base(
         base_prompt,
         profile,
-        USER_PROFILE_CONTEXT_INSTRUCTIONS,
+        coaching_instructions,
     )
 
 
@@ -740,6 +790,7 @@ def _call_openai_weekly_summary(
                 "content": _system_prompt_with_coaching(
                     WEEKLY_SUMMARY_SYSTEM_PROMPT,
                     profile,
+                    USER_PROFILE_WEEKLY_CONTEXT_INSTRUCTIONS,
                 ),
             },
             {
@@ -844,6 +895,35 @@ def auth_login(request: AuthLoginRequest) -> AuthUserResponse:
         raise HTTPException(
             status_code=500,
             detail=f"Failed to log in: {error}",
+        ) from error
+
+
+@app.post("/auth/reset-password", response_model=AuthUserResponse)
+def auth_reset_password(request: AuthResetPasswordRequest) -> AuthUserResponse:
+    username_key = normalize_username(request.username)
+    if not username_key:
+        raise HTTPException(status_code=400, detail="username cannot be empty.")
+
+    try:
+        password_hash = hash_password(request.password)
+        updated = update_user_password(
+            username=request.username,
+            password_hash=password_hash,
+        )
+        if updated is None:
+            raise HTTPException(status_code=404, detail="User not found.")
+        return AuthUserResponse.model_validate(updated)
+    except HTTPException:
+        raise
+    except sqlite3.Error as error:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to reset password: {error}",
+        ) from error
+    except Exception as error:  # noqa: BLE001 — surface as API error
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to reset password: {error}",
         ) from error
 
 
@@ -1091,6 +1171,34 @@ def recent_meal_records(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to load meal records: {error}",
+        ) from error
+
+
+@app.get("/meal-records/{meal_id}", response_model=MealRecordDetailResponse)
+def get_meal_record(
+    meal_id: int,
+    userId: str = Query(default=DEFAULT_USER_ID, min_length=1),
+) -> MealRecordDetailResponse:
+    user_id = userId.strip()
+    if not user_id:
+        raise HTTPException(status_code=400, detail="userId cannot be empty.")
+
+    try:
+        record = get_meal_record_by_id(user_id=user_id, meal_id=meal_id)
+        if record is None:
+            raise HTTPException(status_code=404, detail="Meal record not found.")
+        return MealRecordDetailResponse.model_validate(record)
+    except HTTPException:
+        raise
+    except sqlite3.Error as error:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load meal record: {error}",
+        ) from error
+    except Exception as error:  # noqa: BLE001 — surface as API error
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load meal record: {error}",
         ) from error
 
 

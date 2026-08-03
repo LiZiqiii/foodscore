@@ -6,12 +6,9 @@ import '../models/food_score_insight_item.dart';
 import '../models/food_score_result.dart';
 import 'result_page_controller.dart';
 
-const _insightImprovedSectionTitle = 'WHAT COULD BE IMPROVED';
 const _tipsSectionTitle = 'TIPS FOR NEXT TIME';
-const _emptyDoesWellFallback =
-    'No specific strengths were identified for this meal based on the details provided.';
-const _emptyImprovedFallback =
-    'No specific improvements were suggested for this meal.';
+const _emptyKeyInsightsFallback =
+    'No insights are available for this meal yet based on the details provided.';
 const _emptyTipsFallback =
     'No tips are available for this meal yet.';
 
@@ -20,9 +17,11 @@ class ResultPage extends StatefulWidget {
   const ResultPage({
     super.key,
     required this.result,
+    this.fromHistory = false,
   });
 
   final FoodScoreResult result;
+  final bool fromHistory;
 
   @override
   State<ResultPage> createState() => _ResultPageState();
@@ -77,7 +76,10 @@ class _ResultPageState extends State<ResultPage> {
                 children: [
                   _ScoreTab(result: widget.result),
                   _InsightTab(result: widget.result),
-                  _TipsTab(result: widget.result),
+                  _TipsTab(
+                    result: widget.result,
+                    fromHistory: widget.fromHistory,
+                  ),
                 ],
               ),
             ),
@@ -339,14 +341,9 @@ class _DimensionCardState extends State<_DimensionCard> {
                 ],
               ),
               SizedBox(height: 8.h),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(100.r),
-                child: LinearProgressIndicator(
-                  value: dimension.progress,
-                  minHeight: 7.h,
-                  backgroundColor: const Color(0xFFD9D9D9),
-                  color: barColor,
-                ),
+              _FriendlySegmentedScoreBar(
+                progress: dimension.progress,
+                fillColor: barColor,
               ),
               if (_expanded && hasDetails) ...[
                 SizedBox(height: 8.h),
@@ -393,6 +390,64 @@ class _DimensionCardState extends State<_DimensionCard> {
   }
 }
 
+/// Five soft segments (20 pts each) — friendly meal-app style, not clinical.
+class _FriendlySegmentedScoreBar extends StatelessWidget {
+  const _FriendlySegmentedScoreBar({
+    required this.progress,
+    required this.fillColor,
+  });
+
+  final double progress;
+  final Color fillColor;
+
+  static const int _segmentCount = 5;
+  static const Color _emptyColor = Color(0xFFE6EEE8);
+
+  @override
+  Widget build(BuildContext context) {
+    final clamped = progress.clamp(0.0, 1.0);
+
+    return Row(
+      children: List.generate(_segmentCount, (index) {
+        final segmentStart = index / _segmentCount;
+        final segmentEnd = (index + 1) / _segmentCount;
+        var fillFactor = 0.0;
+        if (clamped >= segmentEnd) {
+          fillFactor = 1.0;
+        } else if (clamped > segmentStart) {
+          fillFactor = (clamped - segmentStart) * _segmentCount;
+        }
+
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(
+              right: index < _segmentCount - 1 ? 5.w : 0,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(7.r),
+              child: SizedBox(
+                height: 10.h,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    const ColoredBox(color: _emptyColor),
+                    if (fillFactor > 0)
+                      FractionallySizedBox(
+                        widthFactor: fillFactor,
+                        alignment: Alignment.centerLeft,
+                        child: ColoredBox(color: fillColor),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
 class _InsightTab extends StatelessWidget {
   const _InsightTab({required this.result});
 
@@ -410,7 +465,7 @@ class _InsightTab extends StatelessWidget {
           _InsightHeroCard(result: result),
           SizedBox(height: 18.h),
           Text(
-            ResultPageController.doesWellSectionTitle,
+            ResultPageController.keyInsightsSectionTitle,
             style: TextStyle(
               fontSize: 13.sp,
               fontWeight: FontWeight.w700,
@@ -419,47 +474,20 @@ class _InsightTab extends StatelessWidget {
             ),
           ),
           SizedBox(height: 12.h),
-          if (result.whatThisMealDoesWell.isEmpty)
+          if (result.keyInsights.isEmpty)
             _InsightCard(
               item: const FoodScoreInsightItem(
                 title: 'Details are unclear',
-                description: _emptyDoesWellFallback,
+                description: _emptyKeyInsightsFallback,
               ),
-              isPositive: true,
+              iconIndex: 0,
             )
           else
-            for (var i = 0; i < result.whatThisMealDoesWell.length; i++) ...[
+            for (var i = 0; i < result.keyInsights.length; i++) ...[
               if (i > 0) SizedBox(height: 10.h),
               _InsightCard(
-                item: result.whatThisMealDoesWell[i],
-                isPositive: true,
-              ),
-            ],
-          SizedBox(height: 18.h),
-          Text(
-            _insightImprovedSectionTitle,
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w700,
-              color: ResultPageController.sectionTitle,
-              letterSpacing: 0.2,
-            ),
-          ),
-          SizedBox(height: 12.h),
-          if (result.whatCouldBeImproved.isEmpty)
-            _InsightCard(
-              item: const FoodScoreInsightItem(
-                title: 'Small improvement',
-                description: _emptyImprovedFallback,
-              ),
-              isPositive: false,
-            )
-          else
-            for (var i = 0; i < result.whatCouldBeImproved.length; i++) ...[
-              if (i > 0) SizedBox(height: 10.h),
-              _InsightCard(
-                item: result.whatCouldBeImproved[i],
-                isPositive: false,
+                item: result.keyInsights[i],
+                iconIndex: i,
               ),
             ],
           SizedBox(height: 24.h),
@@ -539,20 +567,29 @@ class _InsightHeroCard extends StatelessWidget {
 class _InsightCard extends StatelessWidget {
   const _InsightCard({
     required this.item,
-    required this.isPositive,
+    required this.iconIndex,
   });
 
   final FoodScoreInsightItem item;
-  final bool isPositive;
+  final int iconIndex;
+
+  static const _icons = [
+    Icons.hub_outlined,
+    Icons.auto_awesome_outlined,
+    Icons.insights_outlined,
+  ];
+
+  static const _iconColors = [
+    ResultPageController.scoreBarGood,
+    ResultPageController.scoreBarGood,
+    ResultPageController.scoreBarFair,
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final icon = isPositive
-        ? Icons.check_circle_rounded
-        : Icons.lightbulb_outline_rounded;
-    final iconColor = isPositive
-        ? ResultPageController.scoreBarGood
-        : ResultPageController.scoreBarFair;
+    final index = iconIndex % _icons.length;
+    final icon = _icons[index];
+    final iconColor = _iconColors[index];
 
     return Container(
       width: double.infinity,
@@ -602,15 +639,19 @@ class _InsightCard extends StatelessWidget {
 }
 
 class _TipsTab extends StatelessWidget {
-  const _TipsTab({required this.result});
+  const _TipsTab({
+    required this.result,
+    this.fromHistory = false,
+  });
 
   final FoodScoreResult result;
+  final bool fromHistory;
 
   @override
   Widget build(BuildContext context) {
-    final tips = result.tips.trim().isNotEmpty
-        ? result.tips.trim()
-        : _emptyTipsFallback;
+    final tips = result.mealTips.isNotEmpty
+        ? result.mealTips
+        : const [_emptyTipsFallback];
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(
@@ -629,7 +670,10 @@ class _TipsTab extends StatelessWidget {
             ),
           ),
           SizedBox(height: 12.h),
-          _TipsHeroCard(body: tips),
+          for (var i = 0; i < tips.length; i++) ...[
+            if (i > 0) SizedBox(height: 10.h),
+            _TipsHeroCard(body: tips[i]),
+          ],
           SizedBox(height: 16.h),
           _TipsDisclaimerText(
             text: result.disclaimer.isNotEmpty
@@ -639,9 +683,15 @@ class _TipsTab extends StatelessWidget {
           SizedBox(height: 18.h),
           Center(
             child: OutlinedButton(
-              onPressed: () => Navigator.of(context).popUntil(
-                (route) => route.isFirst,
-              ),
+              onPressed: () {
+                if (fromHistory) {
+                  Navigator.of(context).pop();
+                  return;
+                }
+                Navigator.of(context).popUntil(
+                  (route) => route.isFirst,
+                );
+              },
               style: OutlinedButton.styleFrom(
                 minimumSize: Size(double.infinity, 47.h),
                 side: BorderSide(
@@ -724,7 +774,7 @@ class _TipsDisclaimerText extends StatelessWidget {
     return Text.rich(
       TextSpan(
         style: TextStyle(
-          fontSize: 12.sp,
+          fontSize: 10.sp,
           fontWeight: FontWeight.w400,
           color: ResultPageController.scoreExplanationFooterColor,
           height: 1.45,
@@ -891,7 +941,7 @@ class _ScoreExplanationSheet extends StatelessWidget {
                     Text(
                       ResultPageController.scoreExplanationFooterDisclaimer,
                       style: TextStyle(
-                        fontSize: 12.sp,
+                        fontSize: 10.sp,
                         fontWeight: FontWeight.w400,
                         color: ResultPageController.scoreExplanationFooterColor,
                         height: 1.45,

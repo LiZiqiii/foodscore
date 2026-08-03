@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 
 import 'forgot_password_page_controller.dart';
 import 'login_page.dart';
+import '../services/auth_service.dart';
+import '../services/auth_service_factory.dart';
 import '../widgets/auth_form_text_field.dart';
 import '../widgets/page_back_button.dart';
 
-/// 忘记密码页：用户名 + 新密码（原型，尚未接后端重置接口）。
+/// 忘记密码页：用户名 + 新密码，通过后端更新 SQLite 中的密码哈希。
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 
@@ -19,8 +21,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final TextEditingController _passwordController = TextEditingController();
   String? _usernameError;
   String? _passwordError;
+  String? _formError;
   bool _obscurePassword = true;
   bool _updated = false;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -72,7 +76,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return null;
   }
 
-  void _submitResetPassword() {
+  Future<void> _submitResetPassword() async {
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
     final usernameError = _validateUsername(username);
@@ -81,13 +85,49 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     setState(() {
       _usernameError = usernameError;
       _passwordError = passwordError;
+      _formError = null;
     });
 
     if (usernameError != null || passwordError != null) {
       return;
     }
 
-    setState(() => _updated = true);
+    setState(() => _isSubmitting = true);
+
+    try {
+      await createAuthService().resetPassword(
+        username: username,
+        password: password,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isSubmitting = false;
+        _updated = true;
+      });
+    } on AuthServiceException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isSubmitting = false;
+        if (error.statusCode == 404 ||
+            error.message == AuthServiceException.userNotFoundMessage) {
+          _usernameError = ForgotPasswordPageController.userNotFoundMessage;
+        } else {
+          _formError = ForgotPasswordPageController.requestFailedMessage;
+        }
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isSubmitting = false;
+        _formError = ForgotPasswordPageController.requestFailedMessage;
+      });
+    }
   }
 
   void _goToLogin() {
@@ -178,6 +218,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ),
         ),
         SizedBox(height: ForgotPasswordPageController.subtitleToFormGap.h),
+        if (_formError != null) ...[
+          Text(
+            _formError!,
+            style: TextStyle(
+              fontSize: ForgotPasswordPageController.errorFontSize.sp,
+              fontWeight: FontWeight.w400,
+              color: ForgotPasswordPageController.errorTextColor,
+              height: 1.3,
+            ),
+          ),
+          SizedBox(height: ForgotPasswordPageController.fieldErrorGap.h),
+        ],
         _buildValidatedField(
           errorText: _usernameError,
           field: _buildInputField(
@@ -309,13 +361,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Widget _buildResetButton(BuildContext context) {
     return _buildPrimaryButton(
       label: ForgotPasswordPageController.resetButton,
-      onTap: _submitResetPassword,
+      onTap: _isSubmitting ? null : _submitResetPassword,
+      showLoading: _isSubmitting,
     );
   }
 
   Widget _buildPrimaryButton({
     required String label,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
+    bool showLoading = false,
   }) {
     final borderRadius = BorderRadius.circular(
       ForgotPasswordPageController.buttonBorderRadius.r,
@@ -336,15 +390,24 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           width: double.infinity,
           height: ForgotPasswordPageController.buttonHeight.h,
           child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: ForgotPasswordPageController.buttonFontSize.sp,
-                fontWeight: FontWeight.w700,
-                color: ForgotPasswordPageController.buttonTextColor,
-                letterSpacing: 0.3,
-              ),
-            ),
+            child: showLoading
+                ? SizedBox(
+                    width: 22.w,
+                    height: 22.w,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: ForgotPasswordPageController.buttonTextColor,
+                    ),
+                  )
+                : Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: ForgotPasswordPageController.buttonFontSize.sp,
+                      fontWeight: FontWeight.w700,
+                      color: ForgotPasswordPageController.buttonTextColor,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
           ),
         ),
       ),

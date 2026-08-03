@@ -2,13 +2,25 @@
 
 from __future__ import annotations
 
+
+
 import json
+import os
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-DB_PATH = Path(__file__).resolve().parent / "foodscore.db"
+volume_mount_path = os.getenv("RAILWAY_VOLUME_MOUNT_PATH")
+
+if volume_mount_path:
+    # Railway 云端：保存到持久化 Volume
+    DB_PATH = Path(volume_mount_path) / "foodscore.db"
+else:
+    # 本地运行：继续使用原来的数据库
+    DB_PATH = Path(__file__).resolve().parent / "foodscore.db"
+
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_USER_ID = "demo-user"
 DEFAULT_RECENT_DAYS = 7
@@ -162,6 +174,21 @@ def cutoff_iso_for_recent_days(days: int) -> str:
     return cutoff.replace(microsecond=0).isoformat()
 
 
+def _meal_tips_text(result: dict[str, Any]) -> str:
+    """Flatten GPT result tips (string or ``tips.tips`` list) for the DB column."""
+    tips = result.get("tips")
+    if isinstance(tips, str):
+        trimmed = tips.strip()
+        return trimmed if trimmed else "—"
+    if isinstance(tips, dict):
+        inner = tips.get("tips")
+        if isinstance(inner, list):
+            lines = [str(item).strip() for item in inner if str(item).strip()]
+            if lines:
+                return "\n".join(lines)
+    return "—"
+
+
 def insert_meal_record(
     *,
     user_id: str,
@@ -193,7 +220,7 @@ def insert_meal_record(
                 result["overallScore"],
                 result["overallLabel"],
                 result["summary"],
-                result["tips"],
+                _meal_tips_text(result),
                 full_result_json,
                 created_at,
             ),
@@ -222,23 +249,35 @@ def _tags_from_full_result(full_result_json: str) -> list[str]:
         return ["Saved for reflection"]
 
     tags: list[str] = []
-    for item in result.get("whatThisMealDoesWell", []):
-        if len(tags) >= 2:
-            break
-        if not isinstance(item, dict):
-            continue
-        title = str(item.get("title", "")).strip()
-        if title:
-            tags.append(title)
+    insight = result.get("insight")
+    if isinstance(insight, dict):
+        for item in insight.get("keyInsights", []):
+            if len(tags) >= 3:
+                break
+            if not isinstance(item, dict):
+                continue
+            title = str(item.get("title", "")).strip()
+            if title and title not in tags:
+                tags.append(title)
 
-    for item in result.get("whatCouldBeImproved", []):
-        if len(tags) >= 3:
-            break
-        if not isinstance(item, dict):
-            continue
-        title = str(item.get("title", "")).strip()
-        if title and title not in tags:
-            tags.append(title)
+    if not tags:
+        for item in result.get("whatThisMealDoesWell", []):
+            if len(tags) >= 2:
+                break
+            if not isinstance(item, dict):
+                continue
+            title = str(item.get("title", "")).strip()
+            if title:
+                tags.append(title)
+
+        for item in result.get("whatCouldBeImproved", []):
+            if len(tags) >= 3:
+                break
+            if not isinstance(item, dict):
+                continue
+            title = str(item.get("title", "")).strip()
+            if title and title not in tags:
+                tags.append(title)
 
     return tags if tags else ["Saved for reflection"]
 
@@ -300,6 +339,34 @@ def get_user_by_username(username: str) -> dict[str, Any] | None:
         "username": row["username"],
         "password_hash": row["password_hash"],
         "created_at": row["created_at"],
+    }
+
+
+def update_user_password(*, username: str, password_hash: str) -> dict[str, Any] | None:
+    username_key = normalize_username(username)
+    if not username_key:
+        raise ValueError("username cannot be empty.")
+
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            UPDATE users
+            SET password_hash = ?
+            WHERE username_key = ?
+            """,
+            (password_hash, username_key),
+        )
+        connection.commit()
+        if cursor.rowcount == 0:
+            return None
+
+    user = get_user_by_username(username)
+    if user is None:
+        return None
+
+    return {
+        "userId": user["id"],
+        "username": user["username"],
     }
 
 
@@ -464,6 +531,43 @@ def upsert_user_profile(
             "updatedAt": updated_at,
         }
     return profile
+
+
+def get_meal_record_by_id(
+    *,
+    user_id: str,
+    meal_id: int,
+) -> dict[str, Any] | None:
+    with get_connection() as connection:
+        row = connection.execute(
+            """
+            SELECT
+                id,
+                user_id,
+                full_result_json
+            FROM meal_records
+            WHERE id = ?
+              AND user_id = ?
+            """,
+            (meal_id, user_id),
+        ).fetchone()
+
+    if row is None:
+        return None
+
+    try:
+        result = json.loads(row["full_result_json"])
+    except json.JSONDecodeError:
+        return None
+
+    if not isinstance(result, dict):
+        return None
+
+    return {
+        "id": row["id"],
+        "userId": row["user_id"],
+        "result": result,
+    }
 
 
 def get_recent_meal_records(

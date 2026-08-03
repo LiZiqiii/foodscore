@@ -14,6 +14,11 @@ abstract class MealRecordService {
     int? days,
     int limit = 30,
   });
+
+  Future<FoodScoreResult> fetchMealRecordResult({
+    required String userId,
+    required String mealId,
+  });
 }
 
 class MealRecordServiceException implements Exception {

@@ -30,7 +30,7 @@ abstract final class WeeklyReflectionSummaryCache {
   }
 
   /// Bump when weekly summary copy rules change so cached text is regenerated.
-  static const String _summaryFormatVersion = 'week-meal-source-v1';
+  static const String _summaryFormatVersion = 'coaching-personalisation-v2';
 
   static String contextKey({
     required String userId,

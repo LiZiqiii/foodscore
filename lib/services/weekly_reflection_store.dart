@@ -12,6 +12,14 @@ class WeeklyReflectionStore {
       Duration(days: AppConfig.weeklyReflectionDays);
 
   final List<WeeklyReflectionMeal> _meals = [];
+  final Map<String, FoodScoreResult> _resultsByMealId = {};
+
+  /// Cached full feedback for a meal id when available in this session.
+  FoodScoreResult? cachedResultFor(String mealId) => _resultsByMealId[mealId];
+
+  void cacheResult(String mealId, FoodScoreResult result) {
+    _resultsByMealId[mealId] = result;
+  }
 
   /// 全部记录（新 → 旧），未按天数过滤。
   List<WeeklyReflectionMeal> get meals =>
@@ -32,10 +40,18 @@ class WeeklyReflectionStore {
   int get count => mealsWithinLast7Days.length;
 
   /// 用后端最近记录替换内存列表（新 → 旧展示顺序由 [mealsWithinLast7Days] 保证）。
+  /// 空列表也会清空，避免切换账号后仍显示上一用户的记录。
   void replaceMealsFromBackend(List<WeeklyReflectionMeal> mealsNewestFirst) {
     _meals
       ..clear()
       ..addAll(mealsNewestFirst.reversed);
+    _resultsByMealId.clear();
+  }
+
+  /// 登出或切换账号时清空内存记录与缓存的完整 feedback。
+  void clear() {
+    _meals.clear();
+    _resultsByMealId.clear();
   }
   /// Instant Feedback 分析完成后写入（含 GPT mealName、summary、insight tags）。
   void addFromInstantFeedback(
@@ -73,9 +89,11 @@ class WeeklyReflectionStore {
   }) {
     _purgeExpired();
     final loggedText = _normalizeMealText(mealText, isPhoto: isPhoto);
+    final mealId = DateTime.now().microsecondsSinceEpoch.toString();
+    _resultsByMealId[mealId] = result;
     _meals.add(
       WeeklyReflectionMeal(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        id: mealId,
         mealName: _mealNameFromResult(result),
         summary: result.summary.trim(),
         savedAt: DateTime.now(),
@@ -156,17 +174,7 @@ class WeeklyReflectionStore {
   static List<String> _tagsFromResult(FoodScoreResult result) {
     final tags = <String>[];
 
-    for (final item in result.whatThisMealDoesWell) {
-      if (tags.length >= 2) {
-        break;
-      }
-      final title = item.title.trim();
-      if (title.isNotEmpty) {
-        tags.add(title);
-      }
-    }
-
-    for (final item in result.whatCouldBeImproved) {
+    for (final item in result.keyInsights) {
       if (tags.length >= 3) {
         break;
       }

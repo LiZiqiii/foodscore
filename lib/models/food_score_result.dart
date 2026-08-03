@@ -89,10 +89,8 @@ class FoodScoreResult {
     required this.overallLabel,
     required this.summary,
     required this.dimensions,
-    required this.whatThisMealDoesWell,
-    required this.whatCouldBeImproved,
-    required this.tips,
-    required this.positiveNotes,
+    required this.keyInsights,
+    required this.mealTips,
     required this.disclaimer,
   });
 
@@ -107,12 +105,8 @@ class FoodScoreResult {
       overallLabel: overallLabel,
       summary: parseFoodScoreStringField(json['summary']),
       dimensions: dimensions,
-      whatThisMealDoesWell:
-          parseFoodScoreInsightList(json['whatThisMealDoesWell']),
-      whatCouldBeImproved:
-          parseFoodScoreInsightList(json['whatCouldBeImproved']),
-      tips: parseFoodScoreStringField(json['tips']),
-      positiveNotes: parsePositiveNotes(json['positiveNotes']),
+      keyInsights: parseKeyInsights(json),
+      mealTips: parseMealActionTips(json),
       disclaimer: parseFoodScoreStringField(json['disclaimer']),
     );
   }
@@ -122,14 +116,10 @@ class FoodScoreResult {
   final String overallLabel;
   final String summary;
   final List<FoodScoreDimension> dimensions;
-  final List<FoodScoreInsightItem> whatThisMealDoesWell;
-  final List<FoodScoreInsightItem> whatCouldBeImproved;
+  final List<FoodScoreInsightItem> keyInsights;
 
-  /// Tips 页白色文本框内的一段建议（GPT 生成）。
-  final String tips;
-
-  /// Tips 页绿色 Hero 段落（餐食已有优点，GPT 生成）。
-  final String positiveNotes;
+  /// Tips 页 1–2 条可执行建议（GPT 生成，`tips.tips`）。
+  final List<String> mealTips;
   final String disclaimer;
 
   /// Score 页四维度进度条（feedback 作为卡片正文，高度随行数自适应）。
@@ -142,9 +132,6 @@ class FoodScoreResult {
         ),
       )
       .toList();
-
-  /// Tips 页 Hero 正文（positiveNotes 段落）。
-  String get tipsHeadline => positiveNotes;
 
   /// 四维度 0–10 均值得出 0–100 总分（与后端一致）。
   static int computeOverallScore(List<FoodScoreDimension> dimensions) {
@@ -180,12 +167,12 @@ class FoodScoreResult {
         'overallLabel': overallLabel,
         'summary': summary,
         'dimensions': dimensions.map((dimension) => dimension.toJson()).toList(),
-        'whatThisMealDoesWell':
-            whatThisMealDoesWell.map((item) => item.toJson()).toList(),
-        'whatCouldBeImproved':
-            whatCouldBeImproved.map((item) => item.toJson()).toList(),
-        'tips': tips,
-        'positiveNotes': positiveNotes,
+        'insight': {
+          'keyInsights': keyInsights.map((item) => item.toJson()).toList(),
+        },
+        'tips': {
+          'tips': mealTips,
+        },
         'disclaimer': disclaimer,
       };
 }

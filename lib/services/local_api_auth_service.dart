@@ -41,6 +41,18 @@ class LocalApiAuthService implements AuthService {
     );
   }
 
+  @override
+  Future<AuthUser> resetPassword({
+    required String username,
+    required String password,
+  }) {
+    return _authenticate(
+      path: '/auth/reset-password',
+      username: username,
+      password: password,
+    );
+  }
+
   Future<AuthUser> _authenticate({
     required String path,
     required String username,
@@ -73,7 +85,9 @@ class LocalApiAuthService implements AuthService {
         final statusCode = response.statusCode;
         final message = statusCode == 409
             ? AuthServiceException.usernameExistsMessage
-            : _errorMessageFromBody(response);
+            : statusCode == 404
+                ? AuthServiceException.userNotFoundMessage
+                : _errorMessageFromBody(response);
         throw AuthServiceException(message, statusCode: statusCode);
       }
 

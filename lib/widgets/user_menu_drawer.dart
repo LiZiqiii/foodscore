@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../pages/coaching_profile_page.dart';
 import '../pages/login_page.dart';
 import '../services/auth_session.dart';
+import '../services/weekly_reflection_store.dart';
+import '../services/weekly_reflection_summary_cache.dart';
 /// Home 页右侧用户菜单。
 class UserMenuDrawer extends StatelessWidget {
   const UserMenuDrawer({super.key});
@@ -118,6 +120,8 @@ class UserMenuDrawer extends StatelessWidget {
                   child: InkWell(
                     onTap: () {
                       AuthSession.instance.clear();
+                      WeeklyReflectionStore.instance.clear();
+                      WeeklyReflectionSummaryCache.clear();
                       Navigator.of(context).pop();
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute<void>(

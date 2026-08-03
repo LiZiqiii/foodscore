@@ -21,6 +21,10 @@ class ForgotPasswordPageController {
   static const String emptyPasswordMessage = 'Please enter a new password.';
   static const String weakPasswordMessage =
       'Password must be at least 8 characters.';
+  static const String userNotFoundMessage =
+      'No account found for that username.';
+  static const String requestFailedMessage =
+      'Could not reset password. Please try again.';
 
   static const String backToLoginPrefix = 'Remember your password? ';
   static const String logIn = 'Log in';

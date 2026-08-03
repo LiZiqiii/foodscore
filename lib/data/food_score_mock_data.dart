@@ -41,7 +41,7 @@ class FoodScoreMockData {
     );
   }
 
-  static FoodScoreInsightItem _well(String title, String description) {
+  static FoodScoreInsightItem _insight(String title, String description) {
     return FoodScoreInsightItem(title: title, description: description);
   }
 
@@ -49,54 +49,51 @@ class FoodScoreMockData {
     mealName: 'Grilled salmon with quinoa and roasted vegetables',
     overallScore: 85,
     overallLabel: 'Excellent',
-    summary: 'An excellent, well-balanced whole-food meal.',
+    summary:
+        'An excellent, well-balanced whole-food meal with strong variety and minimal processing concerns.',
     dimensions: [
       _dimension(
         0,
         score: 9,
         label: 'Excellent',
-        feedback: 'Strong protein, complex carbs, and vegetables.',
+        feedback:
+            'The meal includes salmon for protein, quinoa for carbohydrates, and roasted vegetables.',
       ),
       _dimension(
         1,
         score: 9,
         label: 'Excellent',
-        feedback: 'Covers protein, grains, and multiple vegetable colours.',
+        feedback:
+            'The meal contains protein, grains, and multiple vegetable colours from the roasted mix.',
       ),
       _dimension(
         2,
         score: 8,
         label: 'Very good',
-        feedback: 'Mostly whole, minimally processed ingredients.',
+        feedback:
+            'Salmon, quinoa, and vegetables appear as mostly whole, minimally processed ingredients.',
       ),
       _dimension(
         3,
         score: 8,
         label: 'Very good',
-        feedback: 'No major processing concerns identified.',
+        feedback:
+            'No heavily processed sauces or ultra-processed items are evident in the description.',
       ),
     ],
-    whatThisMealDoesWell: [
-      _well(
-        'Lean protein',
-        'Salmon provides omega-3 fats and high-quality protein without excess saturated fat.',
+    keyInsights: [
+      _insight(
+        'Balanced foundation',
+        'Protein, complex carbohydrates, and vegetables are all represented, which aligns with strong balance and quality scores.',
       ),
-      _well(
-        'Whole grains',
-        'Quinoa adds fibre and complete plant protein alongside the vegetables.',
-      ),
-    ],
-    whatCouldBeImproved: [
-      _well(
-        'Portion awareness',
-        'Salmon portions can be calorie-dense if regularly oversized.',
+      _insight(
+        'Variety is a clear strength',
+        'The strongest feature is the mix of food groups and colours across salmon, quinoa, and roasted vegetables.',
       ),
     ],
-    tips:
-        'Next time, you could add a small handful of seeds for extra texture, or include one more colourful vegetable to build on the variety you already have.',
-    positiveNotes:
-        'This meal includes lean protein from salmon, whole grains from quinoa, and a colourful vegetable mix. '
-        'Most ingredients appear minimally processed, which supports a strong overall food quality score.',
+    mealTips: [
+      'Consider adding a small handful of seeds or nuts for extra texture while keeping the salmon and vegetable base.',
+    ],
     disclaimer: defaultDisclaimer,
   );
 
@@ -113,59 +110,44 @@ class FoodScoreMockData {
         0,
         score: 7,
         label: 'Good',
-        feedback: 'Good mix of protein, carbs, and vegetables.',
+        feedback:
+            'The meal includes grilled chicken for protein, quinoa for carbohydrates, and salad vegetables.',
       ),
       _dimension(
         1,
         score: 8,
         label: 'Very good',
         feedback:
-            'Includes different food groups, making the meal more diverse.',
+            'Mixed leaves, tomatoes, and quinoa bring several food groups and colours to the plate.',
       ),
       _dimension(
         2,
         score: 7,
         label: 'Good',
         feedback:
-            'Contains mostly whole and minimally processed ingredients.',
+            'Chicken, quinoa, and fresh vegetables are mostly whole ingredients; the dressing type is not specified.',
       ),
       _dimension(
         3,
         score: 6,
         label: 'Fair',
         feedback:
-            'Low in highly processed ingredients, but the sauce may contain added salt or sugar.',
+            'A pre-made dressing may add sodium or sugar; other components appear lightly processed.',
       ),
     ],
-    whatThisMealDoesWell: [
-      _well(
-        'High-quality protein source',
-        'Grilled chicken provides lean protein without excess saturated fat.',
+    keyInsights: [
+      _insight(
+        'Solid structure overall',
+        'Lean protein, whole grains, and vegetables together support the mid-to-high balance and variety scores.',
       ),
-      _well(
-        'Colourful vegetables',
-        'Mixed leaves and vegetables add fibre and micronutrients to the meal.',
-      ),
-      _well(
-        'Whole grain carbohydrates',
-        'Quinoa is a complete protein and complex carbohydrate.',
+      _insight(
+        'Dressing uncertainty limits the top score',
+        'The overall score is held back mainly by unknown dressing ingredients rather than the chicken or vegetable base.',
       ),
     ],
-    whatCouldBeImproved: [
-      _well(
-        'Unknown dressing ingredients',
-        'Pre-made dressings often contain added sugars, refined oils, and excess sodium. The exact composition is not visible.',
-      ),
-      _well(
-        'Limited healthy fat sources',
-        'The meal could benefit from avocado, nuts, or olive oil to improve fat-soluble vitamin absorption.',
-      ),
+    mealTips: [
+      'Try olive oil and lemon instead of creamy dressing, and add avocado or walnuts for a clearer healthy fat source.',
     ],
-    tips:
-        'Next time, you could swap creamy dressing for olive oil and lemon, and add avocado or walnuts for a clearer healthy fat source.',
-    positiveNotes:
-        'This meal includes a clear protein source from grilled chicken, whole grains from quinoa, and colourful vegetables from mixed leaves and tomatoes. '
-        'These choices support meal balance and variety.',
     disclaimer: defaultDisclaimer,
   );
 
@@ -183,59 +165,47 @@ class FoodScoreMockData {
         score: 3,
         label: 'Poor',
         feedback:
-            'Dominated by refined carbs and processed meat; lacks vegetables and whole grains.',
+            'The meal is dominated by refined flour pizza and garlic bread with processed meat and little visible produce.',
       ),
       _dimension(
         1,
         score: 2,
         label: 'Poor',
         feedback:
-            'Very limited food-group diversity with minimal colour or plant variety.',
+            'Food groups are narrow, with limited vegetable colour or plant variety described.',
       ),
       _dimension(
         2,
         score: 2,
         label: 'Poor',
         feedback:
-            'Multiple ultra-processed components including cured meat and refined flour.',
+            'Pepperoni, white-flour bases, and garlic bread are largely ultra-processed or refined components.',
       ),
       _dimension(
         3,
         score: 3,
         label: 'Poor',
         feedback:
-            'High processing level with likely excess sodium, saturated fat, and added sugars.',
+            'Processed meat, refined carbs, and a fizzy drink likely add sodium, saturated fat, and added sugars.',
       ),
     ],
-    whatThisMealDoesWell: [
-      _well(
-        'Provides energy',
-        'The meal delivers quick calories, which may be acceptable occasionally in an otherwise balanced diet.',
+    keyInsights: [
+      _insight(
+        'Limited whole-food presence',
+        'Across balance, variety, and quality dimensions, refined and ultra-processed items outweigh fresh produce.',
+      ),
+      _insight(
+        'Processing drives the low total',
+        'The low overall score is mainly tied to processed meat, refined flour, and the sugary drink rather than portion size alone.',
+      ),
+      _insight(
+        'Protein without plant balance',
+        'Some protein comes from pepperoni, but vegetables and whole grains are largely absent from what was described.',
       ),
     ],
-    whatCouldBeImproved: [
-      _well(
-        'Ultra-processed meat',
-        'Processed pepperoni is typically high in sodium, saturated fat, and preservatives.',
-      ),
-      _well(
-        'Refined carbohydrate base',
-        'White-flour pizza base lacks fibre and may spike blood glucose compared with whole-grain options.',
-      ),
-      _well(
-        'Sugary drink',
-        'A fizzy drink adds empty calories and added sugar without supporting satiety.',
-      ),
-      _well(
-        'Minimal vegetables',
-        'There is little visible plant food, reducing fibre and micronutrient intake for this meal.',
-      ),
+    mealTips: [
+      'Choose water instead of a fizzy drink and add a side salad with extra vegetable toppings on the pizza.',
     ],
-    tips:
-        'Next time, you could choose water instead of a fizzy drink and add a side salad with extra vegetable toppings to improve variety.',
-    positiveNotes:
-        'This meal provides a familiar combination of pizza and garlic bread. '
-        'There is some protein from the pepperoni, though plant foods and whole-food variety are limited in what was described.',
     disclaimer: defaultDisclaimer,
   );
 }

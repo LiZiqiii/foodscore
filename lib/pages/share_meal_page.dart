@@ -64,31 +64,29 @@ class ShareMealPage extends StatelessWidget {
         Text(
           ShareMealPageController.titleLine1,
           style: TextStyle(
-            fontSize: 24.sp,
+            fontSize: MealFlowPageStyle.titleFontSize.sp,
             fontWeight: FontWeight.w600,
-            color: ShareMealPageController.titleColor,
-            height: 1.25,
+            color: MealFlowPageStyle.titleColor,
+            height: MealFlowPageStyle.titleLineHeight,
           ),
         ),
         Text(
           ShareMealPageController.titleLine2,
           style: TextStyle(
-            fontSize: 24.sp,
+            fontSize: MealFlowPageStyle.titleFontSize.sp,
             fontWeight: FontWeight.w600,
-            color: ShareMealPageController.titleColor,
-            height: 1.25,
+            color: MealFlowPageStyle.titleColor,
+            height: MealFlowPageStyle.titleLineHeight,
           ),
         ),
-        SizedBox(height: ShareMealPageController.titleToSubtitleGap.h),
+        SizedBox(height: MealFlowPageStyle.titleToSubtitleGap.h),
         Text(
           ShareMealPageController.subtitle,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: ShareMealPageController.subtitleFontSize.sp,
+            fontSize: MealFlowPageStyle.subtitleFontSize.sp,
             fontWeight: FontWeight.w400,
-            color: ShareMealPageController.subtitleColor,
-            height: 1.3,
+            color: MealFlowPageStyle.subtitleColor,
+            height: MealFlowPageStyle.subtitleLineHeight,
           ),
         ),
       ],
@@ -104,97 +102,112 @@ class ShareMealPage extends StatelessWidget {
       width: double.infinity,
       height: ShareMealPageController.optionCardHeight.h,
       child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const UploadMealPhotoPage(),
-              ),
-            );
-          },
-          borderRadius: radius,
-          splashColor: ShareMealPageController.photoIconColor.withValues(
-            alpha: 0.08,
-          ),
-          child: Ink(
-            decoration: BoxDecoration(
-              borderRadius: radius,
-              border: Border.all(
-                color: ShareMealPageController.photoCardBorder,
-                width: 1,
-              ),
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const UploadMealPhotoPage(),
+                ),
+              );
+            },
+            borderRadius: radius,
+            splashColor: ShareMealPageController.photoIconColor.withValues(
+              alpha: 0.08,
             ),
-            child: ClipRRect(
-              borderRadius: radius,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(
-                    ShareMealPageController.photoCardAsset,
-                    fit: BoxFit.cover,
-                    alignment: Alignment.center,
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: ShareMealPageController.optionCardPaddingH.w,
+            child: Ink(
+              decoration: BoxDecoration(
+                borderRadius: radius,
+                border: Border.all(
+                  color: ShareMealPageController.photoCardBorder,
+                  width: 1,
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: radius,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.asset(
+                      ShareMealPageController.photoCardAsset,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.center,
                     ),
-                    child: _buildOptionCardCenter(
-                      icon: Icon(
-                        Icons.add_a_photo_outlined,
-                        size: ShareMealPageController.optionIconSize.sp,
-                        color: ShareMealPageController.photoIconColor,
-                      ),
-                      title: ShareMealPageController.photoCardTitle,
+                    Column(
+                      children: [
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal:
+                                  ShareMealPageController.optionCardPaddingH.w,
+                            ),
+                            child: Center(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: _buildOptionCardCenterContent(
+                                  icon: Icon(
+                                    Icons.add_a_photo_outlined,
+                                    size: ShareMealPageController
+                                        .optionIconSize.sp,
+                                    color:
+                                        ShareMealPageController.photoIconColor,
+                                  ),
+                                  title: ShareMealPageController.photoCardTitle,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        _buildOptionCardSubtitleInline(
+                          ShareMealPageController.photoCardSubtitle,
+                          ShareMealPageController.photoSubtitleColor,
+                        ),
+                      ],
                     ),
-                  ),
-                  _buildOptionCardSubtitle(
-                    ShareMealPageController.photoCardSubtitle,
-                    ShareMealPageController.photoSubtitleColor,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
     );
   }
 
-  Widget _buildOptionCardCenter({
+  Widget _buildOptionCardCenterContent({
     required Widget icon,
     required String title,
   }) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          icon,
-          SizedBox(height: ShareMealPageController.optionIconToTitleGap.h),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inriaSerif(
-              fontSize: ShareMealPageController.cardTitleFontSize.sp,
-              fontWeight: FontWeight.w700,
-              color: ShareMealPageController.cardTitleColor,
-              height: 1.15,
-            ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        icon,
+        SizedBox(height: ShareMealPageController.optionIconToTitleGap.h),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inriaSerif(
+            fontSize: ShareMealPageController.cardTitleFontSize.sp,
+            fontWeight: FontWeight.w700,
+            color: ShareMealPageController.cardTitleColor,
+            height: 1.15,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildOptionCardSubtitle(
+  Widget _buildOptionCardSubtitleInline(
     String subtitle,
     Color subtitleColor, {
     double? bottomPadding,
   }) {
-    return Positioned(
-      left: ShareMealPageController.optionCardPaddingH.w,
-      right: ShareMealPageController.optionCardPaddingH.w,
-      bottom: (bottomPadding ?? ShareMealPageController.optionSubtitleBottomPadding).h,
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        ShareMealPageController.optionCardPaddingH.w,
+        0,
+        ShareMealPageController.optionCardPaddingH.w,
+        (bottomPadding ?? ShareMealPageController.optionSubtitleBottomPadding).h,
+      ),
       child: Text(
         subtitle,
         textAlign: TextAlign.center,
@@ -219,52 +232,57 @@ class ShareMealPage extends StatelessWidget {
       width: double.infinity,
       height: ShareMealPageController.textCardHeight.h,
       child: Material(
-        color: ShareMealPageController.textCardBg,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: radius,
-          side: const BorderSide(
-            color: ShareMealPageController.textCardBorder,
-            width: 1,
+          color: ShareMealPageController.textCardBg,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: radius,
+            side: const BorderSide(
+              color: ShareMealPageController.textCardBorder,
+              width: 1,
+            ),
           ),
-        ),
-        child: InkWell(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const DescribeMealPage(),
-              ),
-            );
-          },
-          borderRadius: radius,
-          splashColor: ShareMealPageController.backColor.withValues(alpha: 0.08),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: ShareMealPageController.optionCardPaddingH.w,
-                  vertical: ShareMealPageController.optionCardPaddingV.h,
+          child: InkWell(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const DescribeMealPage(),
                 ),
-                child: _buildOptionCardCenter(
-                  icon: Image.asset(
-                    ShareMealPageController.textIconAsset,
-                    width: ShareMealPageController.optionIconSize.w,
-                    height: ShareMealPageController.optionIconSize.w,
-                    fit: BoxFit.contain,
+              );
+            },
+            borderRadius: radius,
+            splashColor:
+                ShareMealPageController.backColor.withValues(alpha: 0.08),
+            child: Column(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: ShareMealPageController.optionCardPaddingH.w,
+                      vertical: ShareMealPageController.optionCardPaddingV.h,
+                    ),
+                    child: Center(
+                      child: _buildOptionCardCenterContent(
+                        icon: Image.asset(
+                          ShareMealPageController.textIconAsset,
+                          width: ShareMealPageController.optionIconSize.w,
+                          height: ShareMealPageController.optionIconSize.w,
+                          fit: BoxFit.contain,
+                        ),
+                        title: ShareMealPageController.textCardTitle,
+                      ),
+                    ),
                   ),
-                  title: ShareMealPageController.textCardTitle,
                 ),
-              ),
-              _buildOptionCardSubtitle(
-                ShareMealPageController.textCardSubtitle,
-                ShareMealPageController.textCardSubtitleColor,
-                bottomPadding: ShareMealPageController.textCardSubtitleBottomPadding,
-              ),
-            ],
+                _buildOptionCardSubtitleInline(
+                  ShareMealPageController.textCardSubtitle,
+                  ShareMealPageController.textCardSubtitleColor,
+                  bottomPadding:
+                      ShareMealPageController.textCardSubtitleBottomPadding,
+                ),
+              ],
+            ),
           ),
         ),
-      ),
     );
   }
 }

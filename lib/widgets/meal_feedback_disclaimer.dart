@@ -10,7 +10,7 @@ abstract final class MealFeedbackDisclaimerCopy {
   static const String learnMoreLabel = 'About this feedback';
 
   static const Color textColor = Color(0xFF8A8C88);
-  static const double fontSize = 12;
+  static const double fontSize = 10;
   static const double lineHeight = 1.4;
 
   /// SafeArea bottom padding below disclaimer on all meal-flow screens.

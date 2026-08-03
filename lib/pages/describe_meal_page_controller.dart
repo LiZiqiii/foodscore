@@ -18,15 +18,15 @@ class DescribeMealPageController {
   static const List<String> tips = [
     'Drinks',
     'Sauces',
-    'Cooking method',
+    'Cooking style',
     'Other details',
   ];
 
   // 颜色
-  static const Color backgroundColor = Color(0xFFF6FAF0);
+  static const Color backgroundColor = Color(0xFFF8FAF5);
   static const Color backColor = Color(0xFF1A6731);
-  static const Color titleColor = Color(0xFF4A4B48);
-  static const Color subtitleColor = Color(0xFF878984);
+  static const Color titleColor = Color(0xB3000000);
+  static const Color subtitleColor = Color(0x99000000);
   static const Color inputBg = Color(0xFFFAFCFA);
   static const Color inputBorderColor = Color(0x0D082310);
   static const Color inputHintColor = Color(0xFFC8CCC8);
@@ -47,8 +47,8 @@ class DescribeMealPageController {
   static const double horizontalPadding = 24;
   static const double topExtraPadding = 10;
   static const double backToTitleGap = 18;
-  static const double titleToSubtitleGap = 12;
-  static const double subtitleFontSize = 14;
+  static const double titleToSubtitleGap = 14;
+  static const double subtitleFontSize = 13;
   static const double subtitleToInputGap = 26;
   static const double inputHeight = 198;
   static const double inputPaddingH = 14;
@@ -66,10 +66,10 @@ class DescribeMealPageController {
   static const double tipIconSize = 11;
   static const double tipIconGap = 3;
   static const double tipChipPaddingH = 8;
-  /// 左列 chip 左内边距（Drinks / Cooking method 灯泡纵向对齐）。
+  /// 左列 chip 左内边距（Drinks / Cooking style 灯泡纵向对齐）。
   static const double tipLeftColumnInset = 10;
   /// 右列 chip 左内边距（Sauces / Other details 灯泡纵向对齐）。
-  static const double tipRightColumnInset = 8;
+  static const double tipRightColumnInset = 14;
   static const double ctaToDisclaimerGap = 36;
   static const double disclaimerBottomPadding = 20;
   static const double tipsToCtaGap = 40;

@@ -108,9 +108,18 @@ class FoodScoreHomePage extends StatelessWidget {
   }
 
   Widget _buildWelcomeCard() {
+    final titleStyle = TextStyle(
+      fontSize: FoodScoreHomeController.welcomeTitleFontSize.sp,
+      fontWeight: FontWeight.w600,
+      color: FoodScoreHomeController.welcomeTitleColor,
+      height: 1.2,
+    );
+
     return Container(
       width: double.infinity,
-      height: FoodScoreHomeController.welcomeCardHeight.h,
+      constraints: BoxConstraints(
+        minHeight: FoodScoreHomeController.welcomeCardHeight.h,
+      ),
       padding: EdgeInsets.fromLTRB(16.w, 18.h, 10.w, 18.h),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -132,57 +141,64 @@ class FoodScoreHomePage extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  FoodScoreHomeController.welcomeTitleLine1,
-                  style: TextStyle(
-                    fontSize: FoodScoreHomeController.welcomeTitleFontSize.sp,
-                    fontWeight: FontWeight.w600,
-                    color: FoodScoreHomeController.welcomeTitleColor,
-                    height: 1.2,
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 18.w, top: 4.h),
-                  child: Text(
-                    FoodScoreHomeController.welcomeTitleLine2,
-                    style: TextStyle(
-                      fontSize: FoodScoreHomeController.welcomeTitleFontSize.sp,
-                      fontWeight: FontWeight.w600,
-                      color: FoodScoreHomeController.welcomeTitleColor,
-                      height: 1.15,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                Text(
-                  FoodScoreHomeController.welcomeSubtitle,
-                  style: TextStyle(
-                    fontSize:
-                        FoodScoreHomeController.welcomeSubtitleFontSize.sp,
-                    fontWeight: FontWeight.w400,
-                    color: FoodScoreHomeController.welcomeSubtitleColor,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(
-            height:
-                (FoodScoreHomeController.welcomeCardHeight - 36).h,
+          Positioned(
+            right: 0,
+            top: 6.h,
             child: Image.asset(
               FoodScoreHomeController.mealImageAsset,
               width: FoodScoreHomeController.welcomeMealImageWidth.w,
+              height: (FoodScoreHomeController.welcomeCardHeight - 36).h,
               fit: BoxFit.contain,
               alignment: Alignment.centerRight,
             ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                FoodScoreHomeController.welcomeTitleLine1,
+                style: titleStyle,
+              ),
+              Text(
+                FoodScoreHomeController.welcomeTitleLine2,
+                style: titleStyle,
+              ),
+              SizedBox(height: 8.h),
+              Padding(
+                padding: EdgeInsets.only(
+                  right: FoodScoreHomeController.welcomeMealImageWidth.w * 0.35,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      FoodScoreHomeController.welcomeSubtitleLine1,
+                      style: TextStyle(
+                        fontSize: FoodScoreHomeController
+                            .welcomeSubtitleFontSize.sp,
+                        fontWeight: FontWeight.w400,
+                        color: FoodScoreHomeController.welcomeSubtitleColor,
+                        height: 1.35,
+                      ),
+                    ),
+                    Text(
+                      FoodScoreHomeController.welcomeSubtitleLine2,
+                      style: TextStyle(
+                        fontSize: FoodScoreHomeController
+                            .welcomeSubtitleFontSize.sp,
+                        fontWeight: FontWeight.w400,
+                        color: FoodScoreHomeController.welcomeSubtitleColor,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

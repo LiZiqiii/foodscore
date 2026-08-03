@@ -52,10 +52,8 @@ class MockFoodScoreService implements FoodScoreService {
         overallLabel: base.overallLabel,
         summary: base.summary,
         dimensions: base.dimensions,
-        whatThisMealDoesWell: base.whatThisMealDoesWell,
-        whatCouldBeImproved: base.whatCouldBeImproved,
-        tips: base.tips,
-        positiveNotes: base.positiveNotes,
+        keyInsights: base.keyInsights,
+        mealTips: base.mealTips,
         disclaimer: base.disclaimer,
       );
     }
@@ -66,10 +64,8 @@ class MockFoodScoreService implements FoodScoreService {
         overallLabel: base.overallLabel,
         summary: base.summary,
         dimensions: base.dimensions,
-        whatThisMealDoesWell: base.whatThisMealDoesWell,
-        whatCouldBeImproved: base.whatCouldBeImproved,
-        tips: base.tips,
-        positiveNotes: base.positiveNotes,
+        keyInsights: base.keyInsights,
+        mealTips: base.mealTips,
         disclaimer: base.disclaimer,
       );
     }

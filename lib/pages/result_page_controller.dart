@@ -27,8 +27,7 @@ class ResultPageController {
   static const String dimensionDetailsShow = 'Details';
   static const String dimensionDetailsHide = 'Hide';
   static const String analysedMealLabel = 'ANALYSED MEAL';
-  static const String doesWellSectionTitle = 'WHAT THIS MEAL DOES WELL';
-  static const String concernSectionTitle = 'AREAS OF CONCERN';
+  static const String keyInsightsSectionTitle = 'KEY INSIGHTS';
   static const String nextTimeTryLabel = 'NEXT TIME, TRY';
   static const String notePrefix = 'Note:';
   static const String rememberPrefix = 'Remember:';
@@ -89,7 +88,7 @@ class ResultPageController {
   // 颜色
   // ---------------------------------------------------------------------------
 
-  static const Color backgroundColor = Color(0xFFF6FAF0);
+  static const Color backgroundColor = Color(0xFFF8FAF5);
   static const Color tabBarBg = Color(0xFFF2F2F2);
   static const Color tabActiveBg = Color(0xFF165529);
   static const Color tabInactiveText = Color(0xFF909090);

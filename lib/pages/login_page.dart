@@ -9,6 +9,8 @@ import 'sign_up_page_controller.dart';
 import '../services/auth_service.dart';
 import '../services/auth_service_factory.dart';
 import '../services/auth_session.dart';
+import '../services/weekly_reflection_store.dart';
+import '../services/weekly_reflection_summary_cache.dart';
 import '../widgets/app_spot_illustration.dart';
 import '../widgets/auth_form_text_field.dart';
 
@@ -124,6 +126,8 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       AuthSession.instance.setUser(user);
+      WeeklyReflectionStore.instance.clear();
+      WeeklyReflectionSummaryCache.clear();
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
           builder: (_) => const FoodScoreHomePage(),
@@ -273,21 +277,27 @@ class _LoginPageState extends State<LoginPage> {
             _buildBrandAccent(),
             SizedBox(width: 10.w),
             Flexible(
-              child: ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [
-                    LoginPageController.brandGradientStart,
-                    LoginPageController.brandGradientEnd,
-                  ],
-                ).createShader(bounds),
-                child: Text(
-                  LoginPageController.appTitle,
-                  style: TextStyle(
-                    fontSize: LoginPageController.brandFontSize.sp,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    height: 1.05,
-                    letterSpacing: 1.2,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [
+                      LoginPageController.brandGradientStart,
+                      LoginPageController.brandGradientEnd,
+                    ],
+                  ).createShader(bounds),
+                  child: Text(
+                    LoginPageController.appTitle,
+                    softWrap: false,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: LoginPageController.brandFontSize.sp,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      height: 1.05,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
               ),

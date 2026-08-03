@@ -5,8 +5,8 @@ class ShareMealPageController {
   ShareMealPageController._();
 
   static const String backLabel = '<  Back';
-  static const String titleLine1 = 'How would you like to share';
-  static const String titleLine2 = 'your meal?';
+  static const String titleLine1 = 'How would you like to';
+  static const String titleLine2 = 'share your meal?';
   static const String subtitle = 'Choose whichever feels easiest — both work great.';
 
   static const String photoCardTitle = 'Snap a photo';
@@ -23,7 +23,7 @@ class ShareMealPageController {
   static const String textIconAsset = 'assets/images/describe_text_icon.png';
 
   // 颜色
-  static const Color backgroundColor = Color(0xFFF6FAF0);
+  static const Color backgroundColor = Color(0xFFF8FAF5);
   static const Color backColor = Color(0xFF1A6731);
   static const Color titleColor = Color(0xB3000000);
   static const Color subtitleColor = Color(0x99000000);
@@ -41,8 +41,8 @@ class ShareMealPageController {
   static const double cardSubtitleFontSize = 12;
 
   /// 两个选项卡片尺寸
-  static const double optionCardHeight = 148;
-  static const double textCardHeight = 128;
+  static const double optionCardHeight = 156;
+  static const double textCardHeight = 136;
   static const double optionCardRadius = 18;
   static const double optionCardPaddingH = 16;
   static const double optionCardPaddingV = 12;

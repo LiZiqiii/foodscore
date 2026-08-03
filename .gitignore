@@ -44,6 +44,12 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# FoodScore backend secrets
+# FoodScore backend secrets and local database
+.env
 backend/.env
 backend/foodscore.db
+
+backend/.venv/
+backend/__pycache__/
+
+android/build/
