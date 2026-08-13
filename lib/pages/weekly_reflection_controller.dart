@@ -35,4 +35,20 @@ class WeeklyReflectionController {
 
   static const double horizontalPadding = 24;
   static const double ctaHeight = 48;
+
+  // Meal record cards (Records section)
+  static const double mealCardRadius = 16;
+  static const double mealCardPaddingH = 14;
+  static const double mealCardPaddingV = 11;
+  static const double mealCardTitleFontSize = 15;
+  static const double mealCardMetaFontSize = 12;
+  static const double mealCardStatusFontSize = 10;
+  static const double mealCardTitleToMetaGap = 5;
+  static const double mealCardMetaToTagsGap = 8;
+  static const double mealCardTagsToStatusGap = 8;
+  static const double mealCardGap = 10;
+  static const double tagChipPaddingH = 7;
+  static const double tagChipPaddingV = 3;
+  static const double tagChipFontSize = 10;
+  static const double tagChipSpacing = 5;
 }

@@ -367,26 +367,67 @@ class _SignUpPageState extends State<SignUpPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          SignUpPageController.coachingLabel,
-                          style: TextStyle(
-                            fontSize:
-                                SignUpPageController.coachingTitleFontSize.sp,
-                            fontWeight: FontWeight.w600,
-                            color: SignUpPageController.sectionTitleColor,
-                            height: 1.2,
-                          ),
+                        Row(
+                          children: [
+                            _buildCoachingLabelIcon(),
+                            SizedBox(
+                              width: SignUpPageController.coachingLabelIconGap.w,
+                            ),
+                            Expanded(
+                              child: Text.rich(
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: SignUpPageController.coachingLabel,
+                                      style: TextStyle(
+                                        fontSize: SignUpPageController
+                                            .coachingTitleFontSize.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: SignUpPageController
+                                            .sectionTitleColor,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text:
+                                          ' ${SignUpPageController.coachingOptionalSuffix}',
+                                      style: TextStyle(
+                                        fontSize: SignUpPageController
+                                            .coachingOptionalFontSize.sp,
+                                        fontWeight: FontWeight.w400,
+                                        color: SignUpPageController
+                                            .coachingSubsectionColor,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         if (!_coachingExpanded) ...[
-                          SizedBox(height: 4.h),
-                          Text(
-                            SignUpPageController.coachingCollapsedHint,
-                            style: TextStyle(
-                              fontSize: SignUpPageController
-                                  .coachingSectionFontSize.sp,
-                              fontWeight: FontWeight.w400,
-                              color: SignUpPageController.coachingSubsectionColor,
-                              height: 1.3,
+                          SizedBox(
+                            height: SignUpPageController.coachingCollapsedHintTopGap.h,
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(
+                              left: SignUpPageController.coachingLabelIconSize.sp +
+                                  SignUpPageController.coachingLabelIconGap.w,
+                            ),
+                            child: Text(
+                              SignUpPageController.coachingCollapsedHint,
+                              maxLines: 2,
+                              style: TextStyle(
+                                fontSize: SignUpPageController
+                                    .coachingSectionFontSize.sp,
+                                fontWeight: FontWeight.w400,
+                                color: SignUpPageController
+                                    .coachingSubsectionColor,
+                                height: 1.3,
+                              ),
                             ),
                           ),
                         ],
@@ -425,6 +466,22 @@ class _SignUpPageState extends State<SignUpPage> {
               : const SizedBox(width: double.infinity),
         ),
       ],
+    );
+  }
+
+  Widget _buildCoachingLabelIcon() {
+    return ShaderMask(
+      shaderCallback: (bounds) => const LinearGradient(
+        colors: [
+          SignUpPageController.coachingLabelIconGradientStart,
+          SignUpPageController.coachingLabelIconGradientEnd,
+        ],
+      ).createShader(bounds),
+      child: Icon(
+        Icons.person_rounded,
+        size: SignUpPageController.coachingLabelIconSize.sp,
+        color: Colors.white,
+      ),
     );
   }
 

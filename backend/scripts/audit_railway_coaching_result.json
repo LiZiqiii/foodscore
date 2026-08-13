@@ -1,0 +1,139 @@
+{
+  "fixed_meal": "Grilled chicken, white rice, and instant noodles with soy sauce",
+  "user_a_no_profile": "3",
+  "user_b_with_profile": "4",
+  "scores": {
+    "a": 45,
+    "b": 40
+  },
+  "tips": {
+    "a": [
+      "Incorporate a variety of vegetables, such as steamed broccoli or bell peppers, to enhance nutrient density.",
+      "Consider replacing instant noodles with whole grain options for increased fiber."
+    ],
+    "b": [
+      "Consider adding steamed vegetables to increase fiber and nutrient density.",
+      "Swap instant noodles for whole grain options to reduce processed food intake."
+    ]
+  },
+  "insights": {
+    "a": [
+      "Protein Source: Grilled chicken provides a solid protein source, but lacks variety in protein types.",
+      "Carbohydrate Choices: White rice and instant noodles are refined carbohydrates, which may lack fiber and nutrients.",
+      "Vegetable Absence: The meal does not include any vegetables, limiting micronutrient intake."
+    ],
+    "b": [
+      "Sodium Awareness: The meal includes soy sauce, which may lead to higher sodium intake, a concern for blood pressure.",
+      "Lack of Vegetables: The absence of vegetables limits fiber and micronutrient intake, impacting overall meal quality.",
+      "Carbohydrate Choices: The presence of both white rice and instant noodles may contribute to refined carbohydrate consumption."
+    ]
+  },
+  "weekly": {
+    "a": {
+      "goodPatterns": [
+        "This week, your logged meal included a good source of protein from grilled chicken.",
+        "Across the week, you've opted for a meal that provides some variety with different ingredients."
+      ],
+      "smallFocus": [
+        "For the coming week, consider adding more vegetables to your meals for added nutrients.",
+        "This week, try swapping refined carbs for whole grains to enhance meal quality."
+      ]
+    },
+    "b": {
+      "goodPatterns": [
+        "This week, your logged meal included grilled chicken, providing a good source of protein.",
+        "Across the week, you have the opportunity to explore more whole food options."
+      ],
+      "smallFocus": [
+        "This week, consider incorporating more vegetables into your meals for added fiber and nutrients.",
+        "To reduce sodium, try using less soy sauce or opting for low-sodium alternatives in your dishes."
+      ]
+    }
+  },
+  "probes": {
+    "health": {
+      "status": 200,
+      "body": {
+        "status": "ok"
+      }
+    },
+    "reset_password": {
+      "status": 404,
+      "body": {
+        "detail": "User not found."
+      }
+    },
+    "meal_record_by_id": {
+      "status": 200,
+      "body": {
+        "id": 1,
+        "userId": "1",
+        "result": {
+          "mealName": "Pasta with Salmon and Cocktail",
+          "overallScore": 60,
+          "overallLabel": "Fair",
+          "summary": "The meal includes a pasta dish with salmon, vegetables, and a cocktail. The pasta is topped with cheese and herbs.",
+          "dimensions": [
+            {
+              "name": "Meal Balance",
+              "description": "Protein, carbs, fats and vegetables.",
+              "score": 6,
+              "label": "Fair",
+              "feedback": "The meal contains protein from salmon, carbohydrates from pasta, and some vegetables, but lacks a wider range of vegetables."
+            },
+            {
+              "name": "Food Variety",
+              "description": "Different food groups, colours and ingredients.",
+              "score": 5,
+              "label": "Fair",
+              "feedback": "The meal shows limited variety with mainly pasta and salmon, and few visible vegetables."
+            },
+            {
+              "name": "Whole Food Quality",
+              "description": "Fresh, whole and minimally processed foods.",
+              "score": 7,
+              "label": "Good",
+              "feedback": "The salmon appears to be a whole food, but the pasta and cocktail may involve more processing."
+            },
+            {
+              "name": "Processing & Concerns",
+              "description": "Added sugar, salt, sauces or ultra-processed items.",
+              "score": 6,
+              "label": "Fair",
+              "feedback": "The cocktail may contain added sugars, and the pasta dish could include sauces that contribute to sodium levels."
+            }
+          ],
+          "insight": {
+            "keyInsights": [
+              {
+                "title": "Protein Source",
+                "description": "Salmon provides a good protein source, beneficial for muscle maintenance and overall health."
+              },
+              {
+                "title": "Limited Vegetable Intake",
+                "description": "The meal lacks a diverse range of vegetables, which may limit micronutrient intake."
+              },
+              {
+                "title": "Cocktail Sugar Content",
+                "description": "The cocktail may contain added sugars, which could contribute to overall sugar intake."
+              }
+            ]
+          },
+          "tips": {
+            "tips": [
+              "Add a side of mixed vegetables to increase nutrient density and variety.",
+              "Consider a lower-sugar beverage option to reduce added sugar intake."
+            ]
+          },
+          "disclaimer": "Meal-level feedback only. Not medical or nutrition advice."
+        }
+      }
+    },
+    "user_profile_missing": {
+      "status": 404,
+      "body": {
+        "detail": "User profile not found."
+      }
+    }
+  }
+}

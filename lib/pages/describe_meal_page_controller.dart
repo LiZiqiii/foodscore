@@ -33,8 +33,8 @@ class DescribeMealPageController {
   static const Color inputTextColor = Color(0xFF4A4B48);
   static const Color tipBg = Color(0xFFE1F4F0);
   static const Color tipTextColor = Color(0xFF3D6C47);
-  static const Color ctaDisabledBg = Color(0xFFEBEBEB);
-  static const Color ctaDisabledText = Color(0xFFD0DAD3);
+  static const Color ctaDisabledBg = Color(0xFFF5F5F5);
+  static const Color ctaDisabledText = Color(0x2B1A6731);
   static const Color ctaEnabledBg = Color(0xFF1A6731);
   static const Color disclaimerColor = Color(0xFF8A8C88);
 
@@ -72,5 +72,5 @@ class DescribeMealPageController {
   static const double tipRightColumnInset = 14;
   static const double ctaToDisclaimerGap = 36;
   static const double disclaimerBottomPadding = 20;
-  static const double tipsToCtaGap = 40;
+  static const double tipsToCtaGap = 32;
 }

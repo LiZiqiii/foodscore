@@ -102,6 +102,24 @@ Score: "What evidence explains each dimension?"
 Insight: "What nutritional pattern emerges from the meal as a whole?"
 Tips: "What specific action could be taken next time?" (recommendations only here)
 
+=== Anti-redundancy (readability — critical) ===
+Users read Score, Insight, and Tips in sequence. Repeating the same point feels tedious. Each nutritional idea has ONE primary home.
+
+Ownership (put each idea here only):
+- summary — brief inventory of identified foods; no patterns, no advice, no dimension conclusions.
+- dimensions[].feedback — evidence for THAT dimension only; do not repeat summary sentences or other dimensions.
+- insight.keyInsights — three distinct cross-cutting patterns; no ingredient lists; no actions; no paraphrasing dimension feedback.
+- tips.tips — one or two actions only; do not restate Insight conclusions or re-explain problems already clear in Score.
+
+Theme audit before output (e.g. missing vegetables, refined carbs, sodium/sauce, low variety, processed noodles):
+- Each theme may appear in at most TWO sections, and never with the same wording in both Insight and Tips.
+- Prefer: one dimension carries the evidence → one Insight card states the pattern → one Tip gives the action (if needed). Do not also repeat in summary.
+- The four dimension feedback lines must each use a different angle; do not mention the same missing item in multiple dimensions unless the angle differs clearly.
+- The three Insight cards must be three different themes — not three variants of "low vegetables" or "processed carbs".
+- If only one Tip, make it the single highest-value action not already spelled out in Insight.
+
+Across summary, all dimension feedback lines, all Insight descriptions, and all Tips: no sentence may be closely paraphrased elsewhere. Shorter is better.
+
 === Scoring rules ===
 - Meal-level food quality only — NOT medical advice, NOT precise nutrition calculation.
 - Each dimension score: integer 0–10. overallScore: integer 0–100 = rounded average of the four dimension scores × 10.
@@ -173,10 +191,10 @@ Tips (tips.tips): when USER CONTEXT is relevant, at least ONE tip must include a
 Use neutral wording; never reference illness or BMI numbers directly. Follow PERSONALISATION INSTRUCTION in the user message.
 
 === Final verification before JSON output ===
-- Score: no advice; supported claims only.
-- Insight: no advice; no scoring language; not paraphrasing Score.
-- Tips: clear actions.
-- No repeated or closely paraphrased sentences across tabs.
+- Score: no advice; supported claims only; four dimension lines each a distinct angle.
+- Insight: no advice; no scoring language; three cards = three different themes; not paraphrasing Score.
+- Tips: clear actions only; no restating Insight; no repeating dimension evidence.
+- No repeated or closely paraphrased sentences across summary, dimensions, Insight, and Tips.
 - Processing score direction correct for identified prepared vs whole foods.
 
 Output ONLY valid JSON per schema. No markdown. No extra fields.
@@ -217,6 +235,14 @@ WEEK FRAMING (required in every bullet):
 goodPatterns — two positives from the week's meals (protein, veg, whole foods, variety). Summarise patterns across meals when there are several; with one meal, note what that entry shows about the week so far. If fewer than 3 meals were logged, at least one bullet should gently note limited records.
 
 smallFocus — two gentle next steps for the coming week (additions, swaps, moderation). One realistic action per bullet. Do not repeat the same ingredient or recommendation across bullets.
+
+=== Anti-redundancy (readability — critical) ===
+Input may include per-meal "Instant feedback summary" and "Insight tags" from Result pages. Do NOT quote, list, or lightly paraphrase those lines — users already saw them.
+Synthesize fresh week-level wording. Advance the conversation: week patterns or one new focus, not a second copy of meal-level feedback.
+
+Each of the four bullets (2 goodPatterns + 2 smallFocus) must be a distinct idea — no shared ingredient or recommendation across all four.
+goodPatterns = positives observed this week; smallFocus = forward actions for next week. Do not put the same swap or addition in both a goodPattern and a smallFocus.
+If a logged meal summary already noted limited vegetables or high sodium, weekly bullets should add week framing or a new angle, not repeat the same sentence.
 
 === Coaching (when USER CONTEXT appears in the user message) ===
 When USER CONTEXT is present and relevant, at least one goodPatterns or smallFocus line must reflect health considerations, stated preferences, or body-composition signals (underweight / overweight / high BMI).
@@ -746,6 +772,7 @@ def _format_weekly_summary_user_message(meals: list[WeeklySummaryMealInput]) -> 
     lines: list[str] = [
         "Task: Write the app's weekly 'This week' reflection (not single-meal Result-page copy).",
         "Use week framing in every goodPatterns and smallFocus sentence, even if only one meal is listed below.",
+        "Do not quote or paraphrase the Instant feedback summary or Insight tags below — synthesize new week-level bullets.",
         "",
     ]
     if meal_count < 3:

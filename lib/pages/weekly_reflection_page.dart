@@ -392,7 +392,7 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
             _buildSectionTitle(WeeklyReflectionController.recentMealsTitle),
             SizedBox(height: 14.h),
             for (var i = 0; i < meals.length; i++) ...[
-              if (i > 0) SizedBox(height: 12.h),
+              if (i > 0) SizedBox(height: WeeklyReflectionController.mealCardGap.h),
               _buildMealCard(context, meals[i]),
             ],
             SizedBox(height: 28.h),
@@ -608,13 +608,22 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
       color: Colors.transparent,
       child: InkWell(
         onTap: isOpening ? null : () => _openHistoricalFeedback(meal),
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(
+          WeeklyReflectionController.mealCardRadius.r,
+        ),
         child: Container(
           width: double.infinity,
-          padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 14.h),
+          padding: EdgeInsets.fromLTRB(
+            WeeklyReflectionController.mealCardPaddingH.w,
+            WeeklyReflectionController.mealCardPaddingV.h,
+            WeeklyReflectionController.mealCardPaddingH.w,
+            WeeklyReflectionController.mealCardPaddingV.h,
+          ),
           decoration: BoxDecoration(
             color: WeeklyReflectionController.cardBg,
-            borderRadius: BorderRadius.circular(16.r),
+            borderRadius: BorderRadius.circular(
+              WeeklyReflectionController.mealCardRadius.r,
+            ),
             border: Border.all(color: WeeklyReflectionController.cardBorder),
             boxShadow: [
               BoxShadow(
@@ -636,10 +645,11 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inriaSerif(
-                        fontSize: 16.sp,
+                        fontSize:
+                            WeeklyReflectionController.mealCardTitleFontSize.sp,
                         fontWeight: FontWeight.w700,
                         color: WeeklyReflectionController.titleColor,
-                        height: 1.25,
+                        height: 1.2,
                       ),
                     ),
                   ),
@@ -656,32 +666,38 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
                   ],
                 ],
               ),
-              SizedBox(height: 6.h),
+              SizedBox(
+                height: WeeklyReflectionController.mealCardTitleToMetaGap.h,
+              ),
               Text(
                 WeeklyReflectionFormat.dayAndTime(meal.savedAt),
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: WeeklyReflectionController.mealCardMetaFontSize.sp,
                   fontWeight: FontWeight.w500,
                   color: WeeklyReflectionController.cardMetaColor,
-                  height: 1.2,
+                  height: 1.15,
                 ),
               ),
-              SizedBox(height: 10.h),
+              SizedBox(
+                height: WeeklyReflectionController.mealCardMetaToTagsGap.h,
+              ),
               Wrap(
-                spacing: 6.w,
-                runSpacing: 6.h,
+                spacing: WeeklyReflectionController.tagChipSpacing.w,
+                runSpacing: WeeklyReflectionController.tagChipSpacing.h,
                 children: [
                   for (final tag in meal.tags) _buildTagChip(tag),
                 ],
               ),
-              SizedBox(height: 10.h),
+              SizedBox(
+                height: WeeklyReflectionController.mealCardTagsToStatusGap.h,
+              ),
               Text(
                 meal.status,
                 style: TextStyle(
-                  fontSize: 11.sp,
+                  fontSize: WeeklyReflectionController.mealCardStatusFontSize.sp,
                   fontWeight: FontWeight.w500,
                   color: WeeklyReflectionController.statusColor,
-                  height: 1.2,
+                  height: 1.15,
                 ),
               ),
             ],
@@ -693,7 +709,10 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
 
   Widget _buildTagChip(String label) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: WeeklyReflectionController.tagChipPaddingH.w,
+        vertical: WeeklyReflectionController.tagChipPaddingV.h,
+      ),
       decoration: BoxDecoration(
         color: WeeklyReflectionController.tagBg,
         borderRadius: BorderRadius.circular(50.r),
@@ -701,10 +720,10 @@ class _WeeklyReflectionPageState extends State<WeeklyReflectionPage> {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 12.sp,
+          fontSize: WeeklyReflectionController.tagChipFontSize.sp,
           fontWeight: FontWeight.w500,
           color: WeeklyReflectionController.tagText,
-          height: 1.1,
+          height: 1.05,
         ),
       ),
     );

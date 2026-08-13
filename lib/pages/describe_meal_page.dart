@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 
 import 'describe_meal_page_controller.dart';
 import '../config/page_layout.dart';
-import '../widgets/meal_feedback_disclaimer.dart';
-import '../widgets/meal_feedback_mode_selector.dart';
 import '../widgets/page_back_button.dart';
 import 'meal_analysis_loading_page.dart';
 
@@ -44,36 +42,23 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
           padding: EdgeInsets.symmetric(
             horizontal: DescribeMealPageController.horizontalPadding.w,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: PageLayout.topExtraPadding.h),
-              const PageBackButton(),
-              SizedBox(height: PageLayout.backToTitleGap.h),
-              _buildTitleSection(),
-              SizedBox(height: DescribeMealPageController.subtitleToInputGap.h),
-              _buildInputField(),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        height: DescribeMealPageController.inputToTipsGap.h,
-                      ),
-                      _buildTipsSection(),
-                      SizedBox(
-                        height: DescribeMealPageController.tipsToCtaGap.h,
-                      ),
-                      _buildCtaButton(context),
-                    ],
-                  ),
-                ),
-              ),
-              const MealFeedbackDisclaimerFooter(
-                style: MealFeedbackDisclaimerStyle.compact,
-              ),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: PageLayout.topExtraPadding.h),
+                const PageBackButton(),
+                SizedBox(height: PageLayout.backToTitleGap.h),
+                _buildTitleSection(),
+                SizedBox(height: DescribeMealPageController.subtitleToInputGap.h),
+                _buildInputField(),
+                SizedBox(height: DescribeMealPageController.inputToTipsGap.h),
+                _buildTipsSection(),
+                SizedBox(height: DescribeMealPageController.tipsToCtaGap.h),
+                _buildCtaButton(context),
+                SizedBox(height: 16.h),
+              ],
+            ),
           ),
         ),
       ),
@@ -310,20 +295,11 @@ class _DescribeMealPageState extends State<DescribeMealPage> {
       child: InkWell(
         onTap: enabled
             ? () {
-                showMealFeedbackModeSheet(
-                  context,
-                  onInstantFeedback: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => MealAnalysisLoadingPage(
-                          mealText: _controller.text.trim(),
-                        ),
-                      ),
-                    );
-                  },
-                  onWeeklyReflection: () => saveMealForWeeklyReflection(
-                    context,
-                    mealText: _controller.text.trim(),
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => MealAnalysisLoadingPage(
+                      mealText: _controller.text.trim(),
+                    ),
                   ),
                 );
               }

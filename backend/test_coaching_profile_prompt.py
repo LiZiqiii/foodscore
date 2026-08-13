@@ -74,6 +74,7 @@ class CoachingProfilePromptTests(unittest.TestCase):
         self.assertIn("at least ONE of the 3 cards", msg)
         self.assertIn("at least ONE tip", msg)
         self.assertIn("OUTPUT RULES:", msg)
+        self.assertIn("anti-redundancy", msg.lower())
         self.assertIn("Because you have", msg)  # forbidden phrase listed in instruction
 
     def test_meal_message_without_profile(self) -> None:
@@ -91,6 +92,7 @@ class CoachingProfilePromptTests(unittest.TestCase):
         self.assertIn("USER CONTEXT", msg)
         self.assertIn(PERSONALISATION_INSTRUCTION_WEEKLY.splitlines()[0], msg)
         self.assertIn("goodPatterns and smallFocus", msg)
+        self.assertIn("distinct week-level", msg.lower())
 
     def test_image_meal_message_structure(self) -> None:
         msg = compose_meal_image_analysis_user_message(

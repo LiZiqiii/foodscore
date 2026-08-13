@@ -8,10 +8,14 @@ class UploadMealPhotoController {
   static const String title = 'Upload your meal photo';
   static const String subtitle = 'A clear top-down photo gives the best results. ';
   static const String uploadHint = 'Tap to choose in Photos or take photo';
+  static const String imageSourceSheetTitle = 'Add a meal photo';
+  static const String takePhotoOption = 'Take a photo';
+  static const String chooseGalleryOption = 'Choose from gallery';
   static const String descriptionLabel = 'Add a description ';
   static const String descriptionOptional = '(optional — improves accuracy)';
   static const String descriptionHint = 'eg. With added BBQ sauce.';
   static const String ctaLabel = 'Continue';
+  static const String enterMealAsTextLabel = 'Enter meal as text instead';
   static const String disclaimerLine1 = 'Approximate meal-level feedback.';
   static const String disclaimerLine2 =
       'Not medical advice or precise nutrient calculation.';
@@ -50,7 +54,7 @@ class UploadMealPhotoController {
   static const double uploadAreaRadius = 12;
   static const double descriptionLabelToOptionalGap = 9;
   static const double optionalToInputGap = 7;
-  static const double descriptionInputHeight = 99;
+  static const double descriptionInputHeight = 72;
   static const double descriptionInputPaddingH = 14;
   static const double descriptionInputPaddingV = 12;
   static const double descriptionInputFontSize = 14;

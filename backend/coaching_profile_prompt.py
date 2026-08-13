@@ -58,12 +58,14 @@ When USER CONTEXT is relevant to the week's logged meals, at least ONE string ac
 PERSONALISATION_INSTRUCTION = PERSONALISATION_INSTRUCTION_MEAL
 
 OUTPUT_RULES_MEAL = """OUTPUT RULES:
-Return ONLY one JSON object matching the system schema. Exactly 3 keyInsights; 1–2 tips. Scores from the meal only. Apply Score/Insight/Tips separation and language rules from the system prompt.
+Return ONLY one JSON object matching the system schema. Exactly 3 keyInsights; 1–2 tips. Scores from the meal only. Apply Score/Insight/Tips separation, anti-redundancy, and language rules from the system prompt.
+Each nutritional theme belongs in one primary section; do not repeat the same point across summary, dimensions, Insight, and Tips.
 When USER CONTEXT is present and relevant, at least 1 keyInsight and at least 1 tip must reflect it."""
 
 OUTPUT_RULES_WEEKLY = """OUTPUT RULES:
 Return ONLY JSON with exactly 2 goodPatterns and 2 smallFocus strings; one English sentence each, at most 22 words.
 Weekly section only: every bullet must use week framing (this week / your week / across the week). Do not use "this meal" or instant meal-review wording, even with one logged meal.
+Do not quote or paraphrase Instant feedback summaries or Insight tags from the meal data — write four distinct week-level bullets.
 When USER CONTEXT is present and relevant, at least one goodPatterns or smallFocus line must reflect it."""
 
 

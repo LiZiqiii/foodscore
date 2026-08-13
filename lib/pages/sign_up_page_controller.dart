@@ -11,7 +11,8 @@ class SignUpPageController {
   static const String usernameHint = 'Username';
   static const String passwordHint = 'Password';
 
-  static const String coachingLabel = 'Meal coaching (optional)';
+  static const String coachingLabel = 'Meal coaching';
+  static const String coachingOptionalSuffix = '(optional)';
   static const String coachingCollapsedHint =
       'Helps personalize meal feedback.';
   static const String aboutYouSection =
@@ -69,6 +70,8 @@ class SignUpPageController {
   static const Color titleColor = Color(0xFF1B5E32);
   static const Color sectionTitleColor = Color(0xFF4A4B48);
   static const Color coachingSubsectionColor = Color(0xFF8A8E8A);
+  static const Color coachingLabelIconGradientStart = Color(0xFF1A6731);
+  static const Color coachingLabelIconGradientEnd = Color(0xFF7FCB8F);
   static const Color chipOutlineColor = Color(0xFFDCE8DC);
   static const Color hintColor = Color(0xFFA8A8A8);
   static const Color inputTextColor = Color(0xFF2C2C2C);
@@ -91,6 +94,9 @@ class SignUpPageController {
   static const double titleFontSize = 26;
   static const double sectionTitleFontSize = 14;
   static const double coachingTitleFontSize = 18;
+  static const double coachingOptionalFontSize = 12;
+  static const double coachingLabelIconSize = 22;
+  static const double coachingLabelIconGap = 8;
   static const double coachingSectionFontSize = 13;
   static const double inputFontSize = 15;
   static const double hintFontSize = 15;
@@ -105,6 +111,7 @@ class SignUpPageController {
   static const double sectionGap = 22;
   static const double coachingLabelGap = 12;
   static const double coachingInnerGap = 8;
+  static const double coachingCollapsedHintTopGap = 8;
   static const double coachingSubsectionTopGap = 6;
   static const double metricsGap = 10;
   static const double chipGap = 8;

@@ -16,15 +16,8 @@ class AppConfig {
   ///
   /// - Windows / iOS 模拟器 / 本机：127.0.0.1
   /// - Android 模拟器：10.0.2.2（指向宿主机）
-  static String get localApiBaseUrl {
-    if (kIsWeb) {
-      return 'http://127.0.0.1:8080';
-    }
-    if (!kIsWeb && Platform.isAndroid) {
-      return 'http://127.0.0.1:8080';
-    }
-    return 'http://127.0.0.1:8080';
-  }
+  static String get localApiBaseUrl =>
+      'https://adorable-courage-production-e7ce.up.railway.app';
 
   /// Weekly Reflection 滚动窗口天数（非自然周 Mon–Sun）。
   ///
