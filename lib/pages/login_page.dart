@@ -14,11 +14,11 @@ import '../services/weekly_reflection_summary_cache.dart';
 import '../widgets/app_spot_illustration.dart';
 import '../widgets/auth_form_text_field.dart';
 
-/// FoodScore 登录页。
+/// Login page
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, this.registrationSuccess = false});
 
-  /// 从注册页跳转过来时为 true，用于显示成功提示。
+  /// registration success
   final bool registrationSuccess;
 
   @override
@@ -35,7 +35,6 @@ class _LoginPageState extends State<LoginPage> {
   String? _formError;
 
   bool _showRegistrationBanner = false;
-
   @override
   void initState() {
     super.initState();
@@ -43,14 +42,12 @@ class _LoginPageState extends State<LoginPage> {
     _passwordController.addListener(_clearPasswordError);
     _showRegistrationBanner = widget.registrationSuccess;
   }
-
   void _dismissRegistrationBanner() {
     if (!_showRegistrationBanner) {
       return;
     }
     setState(() => _showRegistrationBanner = false);
   }
-
   void _clearUsernameError() {
     if (_usernameError == null && _formError == null) {
       return;
@@ -60,7 +57,6 @@ class _LoginPageState extends State<LoginPage> {
       _formError = null;
     });
   }
-
   void _clearPasswordError() {
     if (_passwordError == null && _formError == null) {
       return;
@@ -70,7 +66,6 @@ class _LoginPageState extends State<LoginPage> {
       _formError = null;
     });
   }
-
   @override
   void dispose() {
     _usernameController.removeListener(_clearUsernameError);
@@ -79,7 +74,6 @@ class _LoginPageState extends State<LoginPage> {
     _passwordController.dispose();
     super.dispose();
   }
-
   String? _validateUsername(String username) {
     if (username.isEmpty) {
       return LoginPageController.emptyUsernameMessage;
@@ -89,42 +83,34 @@ class _LoginPageState extends State<LoginPage> {
     }
     return null;
   }
-
   String? _validatePassword(String password) {
     if (password.isEmpty) {
       return LoginPageController.emptyPasswordMessage;
     }
     return null;
   }
-
   Future<void> _submitLogin() async {
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
     final usernameError = _validateUsername(username);
     final passwordError = _validatePassword(password);
-
     setState(() {
       _usernameError = usernameError;
       _passwordError = passwordError;
       _formError = null;
     });
-
     if (usernameError != null || passwordError != null) {
       return;
     }
-
     setState(() => _isSubmitting = true);
-
     try {
       final user = await createAuthService().login(
         username: username,
         password: password,
       );
-
       if (!mounted) {
         return;
       }
-
       AuthSession.instance.setUser(user);
       WeeklyReflectionStore.instance.clear();
       WeeklyReflectionSummaryCache.clear();

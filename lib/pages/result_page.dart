@@ -12,7 +12,6 @@ const _emptyKeyInsightsFallback =
 const _emptyTipsFallback =
     'No tips are available for this meal yet.';
 
-/// AI 分析结果页（Score / Insight / Tips 横向滑动）。
 class ResultPage extends StatefulWidget {
   const ResultPage({
     super.key,
@@ -390,7 +389,7 @@ class _DimensionCardState extends State<_DimensionCard> {
   }
 }
 
-/// Five soft segments (20 pts each) — friendly meal-app style, not clinical.
+/// Five soft segments
 class _FriendlySegmentedScoreBar extends StatelessWidget {
   const _FriendlySegmentedScoreBar({
     required this.progress,

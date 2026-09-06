@@ -180,7 +180,7 @@ abstract final class CoachingPreferencesConstants {
     return null;
   }
 
-  /// Conditions persisted to the API (excludes None and Other).
+  /// Conditions persisted to the API.
 
   static List<String> conditionsForSave(Set<String> selected) {
     return selected

@@ -2,14 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../coaching/coaching_preferences_constants.dart';
 
-/// Coaching Profile 页文案、选项与样式。
 class CoachingProfilePageController {
   CoachingProfilePageController._();
-
   static const String title = 'Coaching Profile';
   static const String explanation =
       'Helps FoodScore tailor meal coaching—not medical advice.';
-
   static const String aboutYouSection =
       CoachingPreferencesConstants.aboutYouSection;
   static const String ageLabel = CoachingPreferencesConstants.ageLabel;
@@ -17,20 +14,16 @@ class CoachingProfilePageController {
   static const String weightHint = CoachingPreferencesConstants.weightHint;
   static const String mealFocusLabel =
       CoachingPreferencesConstants.healthConsiderationsLabel;
-
   static const String ageRangePlaceholder =
       CoachingPreferencesConstants.ageRangePlaceholder;
-
   static const List<String> ageRangeOptions =
       CoachingPreferencesConstants.ageRangeOptions;
-
   static const String saveButton = 'Save';
   static const String loadFailedMessage =
       'Could not load your coaching profile. Please try again.';
   static const String saveFailedMessage =
       'Could not save your coaching profile. Please try again.';
   static const String saveSuccessMessage = 'Coaching profile saved.';
-
   static const Color chipBg = Color(0xFFE1F4F0);
   static const Color chipBgSelected = Color(0xFF1A6731);
   static const Color chipText = Color(0xFF3D6C47);
@@ -38,7 +31,6 @@ class CoachingProfilePageController {
   static const double chipFontSize = 13;
   static const double chipHeight = 32;
   static const double chipGap = 8;
-
   static const Color bgTop = Color(0xFFFFFFFF);
   static const Color bgMid = Color(0xFFF4FBF2);
   static const Color bgBottom = Color(0xFFE8F6E4);
@@ -52,7 +44,6 @@ class CoachingProfilePageController {
   static const Color errorTextColor = Color(0xFFC62828);
   static const Color buttonColor = Color(0xFF7FCB8F);
   static const Color buttonTextColor = Color(0xFF134026);
-
   static const double horizontalPadding = 28;
   static const double topInset = 16;
   static const double backToTitleGap = 20;

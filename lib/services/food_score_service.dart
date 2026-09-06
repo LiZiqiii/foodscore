@@ -1,6 +1,6 @@
 import '../models/food_score_result.dart';
 
-/// 餐食分析服务异常。
+/// food score service exception
 class FoodScoreServiceException implements Exception {
   FoodScoreServiceException(this.message);
 
@@ -10,9 +10,9 @@ class FoodScoreServiceException implements Exception {
   String toString() => message;
 }
 
-/// 餐食分析服务抽象接口（Mock / 本地 FastAPI 可切换）。
+/// food score service abstract interface (Mock / local FastAPI can be switched)
 abstract class FoodScoreService {
-  /// 根据文字描述分析餐食质量。
+  /// analyse meal from text description
   ///
   /// [userId] when set, lets the backend load coaching preferences for personalised text.
   Future<FoodScoreResult> analyseMealFromText(
@@ -20,12 +20,8 @@ abstract class FoodScoreService {
     String? userId,
   });
 
-  /// 根据餐食照片分析餐食质量。
-  ///
-  /// [description] 为可选补充说明，可提高分析准确度。
-  /// [userId] when set, lets the backend load coaching preferences for personalised text.
-  /// [imageBytes] — pass when running on web (from [XFile.readAsBytes]); optional on mobile.
-  /// [imageFileName] — original file name for multipart upload (e.g. from [XFile.name]).
+  /// analyse meal from image
+
   Future<FoodScoreResult> analyseMealFromImage({
     required String imagePath,
     List<int>? imageBytes,

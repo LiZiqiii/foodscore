@@ -22,7 +22,7 @@ class DescribeMealPageController {
     'Other details',
   ];
 
-  // 颜色
+  // colors
   static const Color backgroundColor = Color(0xFFF8FAF5);
   static const Color backColor = Color(0xFF1A6731);
   static const Color titleColor = Color(0xB3000000);
@@ -37,8 +37,6 @@ class DescribeMealPageController {
   static const Color ctaDisabledText = Color(0x2B1A6731);
   static const Color ctaEnabledBg = Color(0xFF1A6731);
   static const Color disclaimerColor = Color(0xFF8A8C88);
-
-  // CTA — 与 home page 一致
   static const double ctaHeight = 48;
   static const double ctaRadius = 15;
   static const double ctaFontSize = 16;
@@ -66,9 +64,7 @@ class DescribeMealPageController {
   static const double tipIconSize = 11;
   static const double tipIconGap = 3;
   static const double tipChipPaddingH = 8;
-  /// 左列 chip 左内边距（Drinks / Cooking style 灯泡纵向对齐）。
   static const double tipLeftColumnInset = 10;
-  /// 右列 chip 左内边距（Sauces / Other details 灯泡纵向对齐）。
   static const double tipRightColumnInset = 14;
   static const double ctaToDisclaimerGap = 36;
   static const double disclaimerBottomPadding = 20;

@@ -1,15 +1,12 @@
 import 'package:ducafe_ui_core/ducafe_ui_core.dart';
 import 'package:flutter/material.dart';
-
 import '../pages/coaching_profile_page.dart';
 import '../pages/login_page.dart';
 import '../services/auth_session.dart';
 import '../services/weekly_reflection_store.dart';
 import '../services/weekly_reflection_summary_cache.dart';
-/// Home 页右侧用户菜单。
 class UserMenuDrawer extends StatelessWidget {
   const UserMenuDrawer({super.key});
-
   static const Color backgroundColor = Color(0xFFF6FAF0);
   static const Color titleColor = Color(0xFF4A4B48);
   static const Color subtitleColor = Color(0xFF878984);

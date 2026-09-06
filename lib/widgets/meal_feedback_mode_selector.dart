@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../pages/meal_analysis_loading_page.dart';
 
-/// Feedback mode bottom sheet 文案。
+/// Feedback mode bottom sheet
 abstract final class MealFeedbackModeCopy {
   static const String sheetTitle = 'How would you like feedback?';
 
@@ -28,7 +28,6 @@ abstract final class MealFeedbackModeCopy {
   static const Color sheetBg = Color(0xFFF6FAF0);
 }
 
-/// 输入完成后弹出 feedback mode 选择 bottom sheet。
 Future<void> showMealFeedbackModeSheet(
   BuildContext context, {
   required VoidCallback onInstantFeedback,

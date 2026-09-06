@@ -1,16 +1,12 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
-
 import '../config/app_config.dart';
 import '../models/food_score_result.dart';
 import 'food_score_service.dart';
 import 'local_api_food_score_service_io.dart'
     if (dart.library.html) 'local_api_food_score_service_stub.dart'
     as io_reader;
-
-/// 通过本地 FastAPI 代理调用 GPT（Flutter 不持有 API key）。
 class LocalApiFoodScoreService implements FoodScoreService {
   LocalApiFoodScoreService({String? baseUrl, http.Client? client})
       : baseUrl = baseUrl ?? AppConfig.localApiBaseUrl,

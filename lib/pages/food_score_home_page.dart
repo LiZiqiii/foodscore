@@ -8,7 +8,6 @@ import '../widgets/user_menu_drawer.dart';
 import 'upload_meal_photo_page.dart';
 import 'weekly_reflection_page.dart';
 
-/// FoodScore 首页 / Onboarding。
 class FoodScoreHomePage extends StatelessWidget {
   const FoodScoreHomePage({super.key});
 

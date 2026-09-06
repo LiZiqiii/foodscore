@@ -1,14 +1,12 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
-
 import '../config/app_config.dart';
 import '../models/weekly_reflection_meal.dart';
 import '../models/weekly_reflection_summary.dart';
 import 'weekly_reflection_format.dart';
 import 'weekly_reflection_summary_service.dart';
 
-/// 通过本地 FastAPI 调用 GPT 生成 Weekly Summary。
+/// call local FastAPI to generate Weekly Summary
 class LocalApiWeeklyReflectionSummaryService
     implements WeeklyReflectionSummaryService {
   LocalApiWeeklyReflectionSummaryService({String? baseUrl, http.Client? client})
@@ -17,9 +15,7 @@ class LocalApiWeeklyReflectionSummaryService
 
   final String baseUrl;
   final http.Client _client;
-
   static const Duration _timeout = Duration(seconds: 60);
-
   @override
   Future<WeeklyReflectionSummary> buildSummary(
     List<WeeklyReflectionMeal> meals, {
@@ -28,7 +24,6 @@ class LocalApiWeeklyReflectionSummaryService
     if (meals.isEmpty) {
       return WeeklyReflectionSummary.empty;
     }
-
     final uri = Uri.parse('$baseUrl/weekly-summary');
     final payload = <String, dynamic>{
       'meals': meals

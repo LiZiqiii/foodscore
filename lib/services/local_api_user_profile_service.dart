@@ -1,7 +1,5 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
-
 import '../config/app_config.dart';
 import '../models/user_profile.dart';
 import 'user_profile_service.dart';
@@ -14,39 +12,31 @@ class LocalApiUserProfileService implements UserProfileService {
 
   final String baseUrl;
   final http.Client _client;
-
   static const Duration _timeout = Duration(seconds: 30);
-
   @override
   Future<UserProfile?> loadProfile(String userId) async {
     final trimmedUserId = userId.trim();
     if (trimmedUserId.isEmpty) {
       throw UserProfileServiceException('User id is empty.');
     }
-
     final uri = Uri.parse('$baseUrl/user-profile').replace(
       queryParameters: {'userId': trimmedUserId},
     );
-
     try {
       final response = await _client.get(uri).timeout(_timeout);
-
       if (response.statusCode == 404) {
         return null;
       }
-
       if (response.statusCode != 200) {
         throw UserProfileServiceException(
           _errorMessageFromBody(response),
           statusCode: response.statusCode,
         );
       }
-
       final decoded = jsonDecode(response.body);
       if (decoded is! Map<String, dynamic>) {
         throw UserProfileServiceException('Invalid profile response.');
       }
-
       return UserProfile.fromJson(decoded);
     } on UserProfileServiceException {
       rethrow;

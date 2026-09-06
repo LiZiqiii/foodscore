@@ -1,4 +1,3 @@
-"""Evaluate prompt output against general rules (requires OPENAI_API_KEY)."""
 
 from __future__ import annotations
 

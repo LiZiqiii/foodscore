@@ -1,7 +1,6 @@
 import '../config/app_config.dart';
 import 'local_api_meal_record_service.dart';
 import 'meal_record_service.dart';
-
 import 'auth_session.dart';
 
 /// Legacy demo user id when no one is logged in.

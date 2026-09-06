@@ -3,7 +3,7 @@ import 'food_score_service.dart';
 import 'local_api_food_score_service.dart';
 import 'mock_food_score_service.dart';
 
-/// 根据 [AppConfig.useMockResult] 创建对应的分析服务实例。
+/// create corresponding analysis service instance based on [AppConfig.useMockResult]
 FoodScoreService createFoodScoreService() {
   if (AppConfig.useMockResult) {
     return MockFoodScoreService();

@@ -1,38 +1,31 @@
 import 'package:ducafe_ui_core/ducafe_ui_core.dart';
 import 'package:flutter/material.dart';
-
 import 'describe_meal_page_controller.dart';
 import '../config/page_layout.dart';
 import '../widgets/page_back_button.dart';
 import 'meal_analysis_loading_page.dart';
 
-/// 文字描述餐食页面。
+/// Describe meal page
 class DescribeMealPage extends StatefulWidget {
   const DescribeMealPage({super.key});
-
   @override
   State<DescribeMealPage> createState() => _DescribeMealPageState();
 }
-
 class _DescribeMealPageState extends State<DescribeMealPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _inputScrollController = ScrollController();
-
   @override
   void initState() {
     super.initState();
     _controller.addListener(() => setState(() {}));
   }
-
   @override
   void dispose() {
     _controller.dispose();
     _inputScrollController.dispose();
     super.dispose();
   }
-
   bool get _hasInput => _controller.text.trim().isNotEmpty;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

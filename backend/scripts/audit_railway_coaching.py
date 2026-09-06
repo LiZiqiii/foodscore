@@ -1,4 +1,4 @@
-"""Read-only Railway coaching audit: deployment probes + meal A/B comparison."""
+
 
 from __future__ import annotations
 

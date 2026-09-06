@@ -40,7 +40,6 @@ class ShareMealPageController {
   static const double cardTitleFontSize = 19;
   static const double cardSubtitleFontSize = 12;
 
-  /// 两个选项卡片尺寸
   static const double optionCardHeight = 156;
   static const double textCardHeight = 136;
   static const double optionCardRadius = 18;
@@ -51,7 +50,7 @@ class ShareMealPageController {
   static const double optionSubtitleBottomPadding = 14;
   static const double textCardSubtitleBottomPadding = 20;
 
-  // 页面布局
+  // page layout
   static const double horizontalPadding = 24;
   static const double topExtraPadding = 10;
   static const double backToTitleGap = 18;

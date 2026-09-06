@@ -1,4 +1,3 @@
-"""Smoke-test meal analysis wording (requires OPENAI_API_KEY in backend/.env)."""
 
 from __future__ import annotations
 

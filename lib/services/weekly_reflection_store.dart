@@ -2,7 +2,6 @@ import '../config/app_config.dart';
 import '../models/food_score_result.dart';
 import '../models/weekly_reflection_meal.dart';
 
-/// 内存中保存 weekly reflection 餐食；与后端 SQLite 同步时仍按滚动 7 天窗口过滤。
 class WeeklyReflectionStore {
   WeeklyReflectionStore._();
 
@@ -14,18 +13,16 @@ class WeeklyReflectionStore {
   final List<WeeklyReflectionMeal> _meals = [];
   final Map<String, FoodScoreResult> _resultsByMealId = {};
 
-  /// Cached full feedback for a meal id when available in this session.
   FoodScoreResult? cachedResultFor(String mealId) => _resultsByMealId[mealId];
 
   void cacheResult(String mealId, FoodScoreResult result) {
     _resultsByMealId[mealId] = result;
   }
 
-  /// 全部记录（新 → 旧），未按天数过滤。
+
   List<WeeklyReflectionMeal> get meals =>
       List.unmodifiable(_meals.reversed);
 
-  /// 滚动窗口内记录（新 → 旧）：`savedAt >= now - weeklyReflectionDays`。
   List<WeeklyReflectionMeal> get mealsWithinLast7Days {
     _purgeExpired();
     final cutoff = _rollingWindowCutoff();
@@ -38,9 +35,6 @@ class WeeklyReflectionStore {
   bool get isEmpty => mealsWithinLast7Days.isEmpty;
 
   int get count => mealsWithinLast7Days.length;
-
-  /// 用后端最近记录替换内存列表（新 → 旧展示顺序由 [mealsWithinLast7Days] 保证）。
-  /// 空列表也会清空，避免切换账号后仍显示上一用户的记录。
   void replaceMealsFromBackend(List<WeeklyReflectionMeal> mealsNewestFirst) {
     _meals
       ..clear()
@@ -48,12 +42,11 @@ class WeeklyReflectionStore {
     _resultsByMealId.clear();
   }
 
-  /// 登出或切换账号时清空内存记录与缓存的完整 feedback。
   void clear() {
     _meals.clear();
     _resultsByMealId.clear();
   }
-  /// Instant Feedback 分析完成后写入（含 GPT mealName、summary、insight tags）。
+
   void addFromInstantFeedback(
     FoodScoreResult result, {
     bool isPhoto = false,
@@ -66,8 +59,6 @@ class WeeklyReflectionStore {
       status: WeeklyReflectionMealStatus.feedbackViewed,
     );
   }
-
-  /// Save for weekly reflection：同样走 GPT 分析，但不展示即时 Result 页。
   void addFromReflectionSave(
     FoodScoreResult result, {
     bool isPhoto = false,
@@ -105,7 +96,6 @@ class WeeklyReflectionStore {
     );
   }
 
-  /// 无 GPT 时的兜底写入（当前 save 流程已改为先分析再存）。
   void addMeal({
     required String summary,
     bool isPhoto = false,
@@ -170,7 +160,6 @@ class WeeklyReflectionStore {
     return '${firstLine.substring(0, 45).trim()}…';
   }
 
-  /// 从 Instant Feedback insight 提取 2–3 个 soft tags（与 Result 页一致，不另造矛盾标签）。
   static List<String> _tagsFromResult(FoodScoreResult result) {
     final tags = <String>[];
 

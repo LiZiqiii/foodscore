@@ -1,9 +1,7 @@
 import 'package:ducafe_ui_core/ducafe_ui_core.dart';
 import 'package:flutter/material.dart';
-
 import '../config/page_layout.dart';
 
-/// 内页统一 Back 按钮，左对齐、样式一致。
 class PageBackButton extends StatelessWidget {
   const PageBackButton({super.key, this.onTap});
 

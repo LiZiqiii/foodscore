@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// 由横线组成的上传/拍照 logo，CustomPaint 绘制。
 class UploadLineLogo extends StatelessWidget {
   const UploadLineLogo({
     super.key,
@@ -50,8 +49,6 @@ class _UploadLineLogoPainter extends CustomPainter {
 
     final double w = size.width;
     final double h = size.height;
-
-    // U 形托盘（底部基座）
     final trayTop = h * 0.56;
     final tray = Path()
       ..moveTo(w * 0.05, trayTop)
@@ -60,7 +57,6 @@ class _UploadLineLogoPainter extends CustomPainter {
       ..lineTo(w * 0.95, trayTop);
     canvas.drawPath(tray, paint);
 
-    // 箭头竖线（向下延伸至托盘开口附近）
     final shaftBottom = h * 0.54;
     final shaftTop = h * 0.06;
     canvas.drawLine(
@@ -69,7 +65,6 @@ class _UploadLineLogoPainter extends CustomPainter {
       paint,
     );
 
-    // 箭头头部（与竖线衔接）
     final head = Path()
       ..moveTo(w * 0.24, h * 0.32)
       ..lineTo(w * 0.5, h * 0.04)

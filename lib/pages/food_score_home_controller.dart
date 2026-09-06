@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// FoodScore 首页控制器。
+/// Home page controller
 class FoodScoreHomeController {
   FoodScoreHomeController._();
 
@@ -9,15 +9,12 @@ class FoodScoreHomeController {
   static const String welcomeTitleLine2 = 'your meal?';
   static const String welcomeSubtitleLine1 = 'Add a photo or describe';
   static const String welcomeSubtitleLine2 = 'your meal.';
-
   static const String ctaLabel = 'Analyse a meal';
   static const String reflectionTitle = 'Weekly Reflection';
   static const String disclaimerLine1 = 'Approximate meal-level feedback.';
   static const String disclaimerLine2 =
       'Not medical advice or precise nutrient calculation.';
-
   static const String mealImageAsset = 'assets/images/meal_bowl.png';
-
   static const List<HomeFeatureItem> features = [
     HomeFeatureItem(
       icon: Icons.photo_camera_outlined,
@@ -33,7 +30,7 @@ class FoodScoreHomeController {
     ),
   ];
 
-  // 颜色
+  // colors
   static const Color backgroundColor = Color(0xFFF8FAF5);
   static const Color welcomeGradientStart = Color(0xFFC8DECC);
   static const Color welcomeGradientEnd = Color(0xFFB2D0B8);
@@ -50,10 +47,9 @@ class FoodScoreHomeController {
   static const Color reflectionArrowColor = Color(0xFFB8C0B8);
   static const Color disclaimerColor = Color(0xFF8A8C88);
 
-  // 尺寸
+  // size
   static const double horizontalPadding = 24;
   static const double topExtraPadding = 4;
-  /// Hero 卡片及以下内容整体下移约 1.5 行。
   static const double heroContentTopGap = 24;
   static const double brandFontSize = 18;
   static const double brandTopInset = 10;
@@ -76,7 +72,6 @@ class FoodScoreHomeController {
   static const double disclaimerBottomPadding = 52;
 }
 
-/// 首页功能项。
 class HomeFeatureItem {
   const HomeFeatureItem({
     required this.icon,

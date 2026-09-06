@@ -32,7 +32,6 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 在应用根部初始化 ScreenUtil，启用 ducafe_ui_core 的屏幕适配能力。
     return ScreenUtilInit(
       designSize: const Size(360, 690),
       minTextAdapt: true,

@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// 餐食分析 Loading 页控制器。
+/// Loading page controller
 class MealAnalysisLoadingController {
   MealAnalysisLoadingController._();
-
   static const String title = 'Analysing your meal...';
   static const String hint = 'This only takes a few seconds.';
   static const String reflectionSaveTitle = 'Saving your meal...';
   static const String reflectionSavedMessage =
       'Meal saved for your weekly reflection.';
-
-  // 颜色
   static const Color backgroundStart = Color(0xFFF6FAF0);
   static const Color backgroundEnd = Color(0xFFEEF7F1);
   static const Color glowColor = Color(0xFF1A6731);
@@ -21,8 +18,7 @@ class MealAnalysisLoadingController {
   static const Color ringTrackColor = Color(0x331A6731);
   static const Color ringActiveColor = Color(0xFF1A6731);
   static const Color iconColor = Color(0xFF0F6B35);
-
-  // 尺寸
+  // size
   static const double horizontalPadding = 28;
   static const double cardRadius = 22;
   static const double cardPaddingH = 24;
@@ -33,8 +29,7 @@ class MealAnalysisLoadingController {
   static const double titleFontSize = 18;
   static const double subtitleFontSize = 14;
   static const double hintFontSize = 13;
-
-  // 分析失败时的文案与按钮（不改变 Loading 主视觉，仅在出错时显示）
+  // error text and button
   static const String errorTitle = 'Analysis failed';
   static const String errorFallbackMessage =
       'Something went wrong while analysing your meal. Please try again.';

@@ -1,4 +1,3 @@
-"""Coaching + processing direction smoke test (requires OPENAI_API_KEY in backend/.env)."""
 
 from __future__ import annotations
 

@@ -8,7 +8,7 @@ import '../services/auth_service_factory.dart';
 import '../widgets/auth_form_text_field.dart';
 import '../widgets/page_back_button.dart';
 
-/// 忘记密码页：用户名 + 新密码，通过后端更新 SQLite 中的密码哈希。
+/// Forgot password page
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 

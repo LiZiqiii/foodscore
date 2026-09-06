@@ -1,7 +1,7 @@
 import '../models/weekly_reflection_meal.dart';
 import '../models/weekly_reflection_summary.dart';
 
-/// 从最近餐食记录生成的 Weekly Summary（规则聚合，API 失败时的 fallback）。
+/// build Weekly Summary from recent meal records
 abstract final class WeeklyReflectionSummaryBuilder {
   static WeeklyReflectionSummary build(List<WeeklyReflectionMeal> meals) {
     if (meals.isEmpty) {

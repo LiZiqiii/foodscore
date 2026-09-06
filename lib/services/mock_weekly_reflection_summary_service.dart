@@ -2,7 +2,6 @@ import '../models/weekly_reflection_meal.dart';
 import '../models/weekly_reflection_summary.dart';
 import 'weekly_reflection_summary_service.dart';
 
-/// Mock Weekly Summary（联调 UI，不请求 GPT）。
 class MockWeeklyReflectionSummaryService
     implements WeeklyReflectionSummaryService {
   MockWeeklyReflectionSummaryService({

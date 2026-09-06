@@ -14,10 +14,8 @@ from typing import Any
 volume_mount_path = os.getenv("RAILWAY_VOLUME_MOUNT_PATH")
 
 if volume_mount_path:
-    # Railway 云端：保存到持久化 Volume
     DB_PATH = Path(volume_mount_path) / "foodscore.db"
 else:
-    # 本地运行：继续使用原来的数据库
     DB_PATH = Path(__file__).resolve().parent / "foodscore.db"
 
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -238,7 +236,6 @@ def insert_meal_record(
         "createdAt": created_at,
     }
 
-
 def _tags_from_full_result(full_result_json: str) -> list[str]:
     try:
         result = json.loads(full_result_json)
@@ -247,7 +244,6 @@ def _tags_from_full_result(full_result_json: str) -> list[str]:
 
     if not isinstance(result, dict):
         return ["Saved for reflection"]
-
     tags: list[str] = []
     insight = result.get("insight")
     if isinstance(insight, dict):
@@ -280,8 +276,6 @@ def _tags_from_full_result(full_result_json: str) -> list[str]:
                 tags.append(title)
 
     return tags if tags else ["Saved for reflection"]
-
-
 def create_user(*, username: str, password_hash: str) -> dict[str, Any]:
     display_username = trim_username(username)
     username_key = normalize_username(username)
