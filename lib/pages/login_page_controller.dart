@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// FoodScore 登录页控制器：文案、颜色与布局常量。
+/// Login page controller
 class LoginPageController {
   LoginPageController._();
-
-  // ---------------------------------------------------------------------------
-  // 文案
-  // ---------------------------------------------------------------------------
 
   static const String greeting = 'Hello!';
   static const String appTitle = 'FoodScore';
@@ -18,10 +14,8 @@ class LoginPageController {
   static const String forgetPassword = 'Forgot password?';
   static const String noAccountPrefix = 'Don\'t have an account? ';
   static const String signUp = 'Sign up';
-
   static const int minPasswordLength = 8;
   static const int maxUsernameLength = 50;
-
   static const String emptyUsernameMessage = 'Please enter a username.';
   static const String invalidUsernameMessage =
       'Username must be 1–50 characters.';
@@ -29,33 +23,22 @@ class LoginPageController {
   static const String invalidLoginMessage = 'Invalid username or password.';
   static const String requestFailedMessage =
       'Could not reach the server. Please try again.';
-
   static const Color inputErrorBorderColor = Color(0xFFE57373);
   static const Color errorTextColor = Color(0xFFC62828);
   static const double errorFontSize = 12;
   static const double fieldErrorGap = 6;
-
   static bool isValidUsername(String username) {
     final trimmed = username.trim();
     return trimmed.isNotEmpty && trimmed.length <= maxUsernameLength;
   }
-
   static bool isValidPassword(String password) {
     return password.isNotEmpty;
   }
 
-  // ---------------------------------------------------------------------------
-  // 背景色 — 白 → 浅薄荷绿，干净无灰块
-  // ---------------------------------------------------------------------------
-
+  // background color
   static const Color bgTop = Color(0xFFFFFFFF);
   static const Color bgMid = Color(0xFFF4FBF2);
   static const Color bgBottom = Color(0xFFE8F6E4);
-
-  // ---------------------------------------------------------------------------
-  // 内容色
-  // ---------------------------------------------------------------------------
-
   static const Color titleGreetingColor = Color(0xFF1B5E32);
   static const Color brandGradientStart = Color(0xFF145A2E);
   static const Color brandGradientEnd = Color(0xFF2E9B52);
@@ -69,11 +52,6 @@ class LoginPageController {
   static const Color buttonTextColor = Color(0xFF134026);
   static const Color linkColor = Color(0xFF6BAF7E);
   static const Color footerTextColor = Color(0xFF757575);
-
-  // ---------------------------------------------------------------------------
-  // 字体
-  // ---------------------------------------------------------------------------
-
   static const double greetingFontSize = 36;
   static const double brandFontSize = 44;
   static const double taglineFontSize = 14;
@@ -81,11 +59,6 @@ class LoginPageController {
   static const double hintFontSize = 15;
   static const double buttonFontSize = 17;
   static const double linkFontSize = 15;
-
-  // ---------------------------------------------------------------------------
-  // 布局
-  // ---------------------------------------------------------------------------
-
   static const double horizontalPadding = 28;
   static const double topInset = 52;
   static const double greetingToBrandGap = 2;
@@ -95,7 +68,6 @@ class LoginPageController {
   static const double formToButtonGap = 24;
   static const double buttonToForgetGap = 28;
   static const double forgetToSignUpGap = 18;
-
   static const double formWidthRatio = 0.8;
   static const double inputHeight = 40;
   static const double inputBorderRadius = 12;

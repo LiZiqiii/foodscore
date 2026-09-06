@@ -1,7 +1,7 @@
 import '../models/weekly_reflection_meal.dart';
 import '../models/weekly_reflection_summary.dart';
 
-/// Weekly Summary 生成异常。
+/// Weekly Summary generation exception
 class WeeklyReflectionSummaryException implements Exception {
   WeeklyReflectionSummaryException(this.message);
 
@@ -11,7 +11,7 @@ class WeeklyReflectionSummaryException implements Exception {
   String toString() => message;
 }
 
-/// 根据最近餐食生成 Weekly Summary（Mock / 本地 FastAPI + GPT）。
+/// build Weekly Summary from recent meal records
 abstract class WeeklyReflectionSummaryService {
   Future<WeeklyReflectionSummary> buildSummary(
     List<WeeklyReflectionMeal> meals, {

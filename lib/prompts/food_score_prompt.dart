@@ -1,21 +1,12 @@
-/// GPT prompt / JSON schema 对齐说明（Flutter 端）。
-///
-/// **用途：** 未来由 FastAPI backend 调用 OpenAI 时，system prompt 与响应 JSON
-/// 结构应与此文件保持一致，以便解析为 [FoodScoreResult] 并在 [ResultPage] 展示。
-///
-/// **当前状态：** 仅文档与常量，不调用 OpenAI API。
-/// 参见同目录 [backend_prompt_note.md] 供 backend 开发者阅读。
+
+
 library;
 
 // ignore_for_file: lines_longer_than_80_chars
 
-/// Prompt 文案、JSON 示例与 ResultPage 字段映射。
+/// Prompt text, JSON example and ResultPage field mapping.
 abstract final class FoodScorePrompt {
-  // ---------------------------------------------------------------------------
-  // 1. 任务说明（System Prompt）
-  // ---------------------------------------------------------------------------
-
-  /// 供 GPT / backend 使用的 system prompt。
+  /// system prompt for GPT / backend
   static const String systemPrompt = '''
 You are FoodScore, a meal-quality assessment assistant.
 
@@ -30,11 +21,7 @@ Rules:
 - All string fields must be in English unless the user's input is clearly in another language (then match the user's language for user-facing text).
 ''';
 
-  // ---------------------------------------------------------------------------
-  // 2. 固定四个 Dimensions
-  // ---------------------------------------------------------------------------
-
-  /// GPT 必须按此顺序返回 4 个 dimension；`name` 与 `description` 必须与定义完全一致。
+  /// GPT must return 4 dimensions in the fixed order; `name` and `description` must match the definitions exactly.
   static const List<FoodScoreDimensionPromptSpec> dimensionSpecs = [
     FoodScoreDimensionPromptSpec(
       name: 'Meal Balance',
@@ -62,10 +49,7 @@ Rules:
     ),
   ];
 
-  // ---------------------------------------------------------------------------
-  // 3. User Prompt 模板
-  // ---------------------------------------------------------------------------
-
+  /// user prompt template
   static const String textUserPromptPrefix = 'Analyse this meal description:\n\n';
 
   static const String imageUserPromptPrefix =
@@ -74,11 +58,11 @@ Rules:
   static const String imageUserPromptWithDescriptionSuffix =
       ' and the following description:\n\n';
 
-  /// 拼接文字输入：`$textUserPromptPrefix$mealText`
+  /// concatenate text input: `$textUserPromptPrefix$mealText`
   static String textUserPrompt(String mealText) =>
       '$textUserPromptPrefix$mealText';
 
-  /// 拼接图片 + 可选描述。
+  /// concatenate image input: `$imageUserPromptPrefix$description`
   static String imageUserPrompt({String? description}) {
     if (description == null || description.trim().isEmpty) {
       return '$imageUserPromptPrefix.';
@@ -86,11 +70,7 @@ Rules:
     return '$imageUserPromptPrefix$imageUserPromptWithDescriptionSuffix$description';
   }
 
-  // ---------------------------------------------------------------------------
-  // 4. 必须返回的 JSON 字段
-  // ---------------------------------------------------------------------------
-
-  /// JSON 根对象字段说明（与 [FoodScoreResult] 一一对应）。
+  /// required JSON fields
   static const Map<String, String> responseFieldSpec = {
     'mealName':
         'Short human-readable name for the meal (e.g. "Grilled chicken salad").',
@@ -112,7 +92,7 @@ Rules:
         'Single string — e.g. meal-level feedback disclaimer on Tips tab.',
   };
 
-  /// 每个 dimension 对象的字段说明。
+  /// field spec for each dimension object
   static const Map<String, String> dimensionFieldSpec = {
     'name': 'Must exactly match one of the four fixed dimension names.',
     'description': 'Must exactly match the fixed description for that dimension.',
@@ -122,7 +102,7 @@ Rules:
         'One or two sentences explaining the score for this dimension.',
   };
 
-  /// 示例 JSON（backend 集成 / GPT structured output 参考）。
+  /// example JSON (for backend integration / GPT structured output reference)
   static const String exampleJson = '''
 {
   "mealName": "Grilled chicken salad",
@@ -180,11 +160,8 @@ Rules:
 }
 ''';
 
-  // ---------------------------------------------------------------------------
-  // 5. ResultPage 三页映射
-  // ---------------------------------------------------------------------------
-
-  /// PageView index 0 — **Score** tab。
+  // ResultPage three pages mapping
+ 
   static const Map<String, String> scoreTabFieldMapping = {
     'overallScore': 'Hero 分数（OUT OF 100）',
     'overallLabel': '分数下方标签',
@@ -193,20 +170,16 @@ Rules:
     'dimensions[].feedback': '各维度 factual 评分依据（无建议用语）',
   };
 
-  /// PageView index 1 — **Insight** tab。
   static const Map<String, String> insightTabFieldMapping = {
     'mealName': 'Insight hero 卡片',
     'overallScore': 'Insight hero 右侧分数',
     'insight.keyInsights[]': 'KEY INSIGHTS 白色卡片（title + description）',
   };
-
-  /// PageView index 2 — **Tips** tab。
   static const Map<String, String> tipsTabFieldMapping = {
     'tips.tips[]': '1–2 条可执行建议（白色 lightbulb 卡片）',
     'disclaimer': '底部 Remember 免责声明',
   };
 
-  /// 完整 system prompt + JSON 要求（可直接粘贴到 backend）。
   static String buildSystemPromptWithSchema() {
     final buffer = StringBuffer(systemPrompt)
       ..writeln()
@@ -232,14 +205,12 @@ Rules:
   }
 }
 
-/// 单个维度的 prompt 定义。
 class FoodScoreDimensionPromptSpec {
   const FoodScoreDimensionPromptSpec({
     required this.name,
     required this.description,
     required this.scoringGuide,
   });
-
   final String name;
   final String description;
   final String scoringGuide;

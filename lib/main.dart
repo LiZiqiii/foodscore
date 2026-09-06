@@ -42,7 +42,7 @@ class MainApp extends StatelessWidget {
           value: _systemUiOverlayStyle,
           child: MaterialApp(
             debugShowCheckedModeBanner: false,
-            title: 'Exercise App',
+            title: 'FoodScore',
             builder: (context, child) {
               final mediaQuery = MediaQuery.of(context);
               return MediaQuery(

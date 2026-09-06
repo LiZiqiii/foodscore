@@ -15,7 +15,7 @@ import '../services/weekly_reflection_store.dart';
 import 'meal_analysis_loading_controller.dart';
 import 'result_page.dart';
 
-/// 餐食分析 Loading 页（等待大模型分析）。
+///  Loading page
 class MealAnalysisLoadingPage extends StatefulWidget {
   const MealAnalysisLoadingPage({
     super.key,
@@ -26,26 +26,24 @@ class MealAnalysisLoadingPage extends StatefulWidget {
     this.saveForReflectionOnly = false,
   });
 
-  /// 文字描述流程传入的餐食说明。
+  /// meal text
   final String? mealText;
 
-  /// 照片流程传入的本地图片路径（Web 上多为 blob URL，上传请用 [imageFile]）。
+  /// image path
   final String? imagePath;
 
-  /// 照片流程选中的文件；Web 上必须用此字段读取字节。
+  /// image file
   final XFile? imageFile;
 
-  /// 照片流程可选的补充描述。
+  /// description
   final String? description;
 
-  /// 为 true 时不进入 Result 页，分析完成后写入 weekly reflection 并回首页。
+  /// save for reflection only
   final bool saveForReflectionOnly;
-
   @override
   State<MealAnalysisLoadingPage> createState() =>
       _MealAnalysisLoadingPageState();
 }
-
 class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
     with TickerProviderStateMixin {
   late final AnimationController _spinController;
@@ -54,7 +52,6 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
   bool _isAnalysing = true;
   String? _errorMessage;
   bool _analysisUsedMock = AppConfig.useMockResult;
-
   @override
   void initState() {
     super.initState();
@@ -71,9 +68,7 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
     );
     _runAnalysis();
   }
-
   FoodScoreService _createService() => createFoodScoreService();
-
   Future<void> _runAnalysis({FoodScoreService? serviceOverride}) async {
     setState(() {
       _isAnalysing = true;
@@ -85,11 +80,9 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
     if (!_pulseController.isAnimating) {
       _pulseController.repeat(reverse: true);
     }
-
     final service = serviceOverride ?? _createService();
     _analysisUsedMock =
         serviceOverride is MockFoodScoreService || AppConfig.useMockResult;
-
     try {
       final FoodScoreResult result;
       if (widget.imagePath != null && widget.imagePath!.isNotEmpty) {
@@ -116,9 +109,7 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
       if (!mounted) {
         return;
       }
-
       await _persistMealRecordIfNeeded(result);
-
       if (!mounted) {
         return;
       }
@@ -139,7 +130,6 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
       }
     }
   }
-
   void _showError(String message) {
     if (!mounted) {
       return;
@@ -151,28 +141,23 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
       _errorMessage = message;
     });
   }
-
   Future<void> _useMockResult() {
     return _runAnalysis(
       serviceOverride: MockFoodScoreService(),
     );
   }
-
   Future<void> _persistMealRecordIfNeeded(FoodScoreResult result) async {
     if (_analysisUsedMock) {
       return;
     }
-
     final service = createMealRecordService();
     if (service == null) {
       return;
     }
-
     final mealText = _originalMealTextForSave();
     if (mealText.isEmpty) {
       return;
     }
-
     try {
       await service.saveMealRecord(
         userId: currentUserId,
@@ -185,30 +170,24 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
       debugPrint('Meal record save failed: $error');
     }
   }
-
   String _originalMealTextForSave() {
     final mealText = widget.mealText?.trim();
     if (mealText != null && mealText.isNotEmpty) {
       return mealText;
     }
-
     final description = widget.description?.trim();
     if (description != null && description.isNotEmpty) {
       return description;
     }
-
     if (widget.imagePath != null && widget.imagePath!.isNotEmpty) {
       return 'Meal photo';
     }
-
     return '';
   }
-
   void _goToResultPage(FoodScoreResult result) {
     if (!mounted) {
       return;
     }
-
     final isPhoto =
         widget.imagePath != null && widget.imagePath!.isNotEmpty;
     WeeklyReflectionStore.instance.addFromInstantFeedback(
@@ -223,12 +202,10 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
       ),
     );
   }
-
   void _finishReflectionSave(FoodScoreResult result) {
     if (!mounted) {
       return;
     }
-
     final isPhoto =
         widget.imagePath != null && widget.imagePath!.isNotEmpty;
     WeeklyReflectionStore.instance.addFromReflectionSave(
@@ -236,7 +213,6 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
       isPhoto: isPhoto,
       mealText: _originalMealTextForSave(),
     );
-
     final messenger = ScaffoldMessenger.of(context);
     Navigator.of(context).popUntil((route) => route.isFirst);
     messenger.showSnackBar(
@@ -246,7 +222,6 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
       ),
     );
   }
-
   String get _loadingTitle {
     if (!_isAnalysing) {
       return MealAnalysisLoadingController.errorTitle;
@@ -256,14 +231,12 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
     }
     return MealAnalysisLoadingController.title;
   }
-
   @override
   void dispose() {
     _spinController.dispose();
     _pulseController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -293,7 +266,6 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
       ),
     );
   }
-
   Widget _buildLoadingCard() {
     return Container(
       width: double.infinity,
@@ -369,7 +341,6 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
 
   Widget _buildBrandedLoader() {
     final ringSize = MealAnalysisLoadingController.ringSize.w;
-
     return SizedBox(
       width: ringSize,
       height: ringSize,
@@ -399,7 +370,6 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
       ),
     );
   }
-
   Widget _buildErrorPanel() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -461,7 +431,6 @@ class _MealAnalysisLoadingPageState extends State<MealAnalysisLoadingPage>
     );
   }
 }
-
 class _LoadingBackground extends StatelessWidget {
   const _LoadingBackground();
 
@@ -511,7 +480,6 @@ class _LoadingBackground extends StatelessWidget {
     );
   }
 }
-
 class _GlowBlob extends StatelessWidget {
   const _GlowBlob({
     required this.size,
@@ -522,7 +490,6 @@ class _GlowBlob extends StatelessWidget {
   final double size;
   final Offset offset;
   final double opacity;
-
   @override
   Widget build(BuildContext context) {
     return Transform.translate(
@@ -553,7 +520,6 @@ class _GreenRingPainter extends CustomPainter {
     required this.activeColor,
     required this.strokeWidth,
   });
-
   final double progress;
   final Color trackColor;
   final Color activeColor;
@@ -568,9 +534,7 @@ class _GreenRingPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
-
     canvas.drawCircle(center, radius, trackPaint);
-
     final activePaint = Paint()
       ..color = activeColor
       ..style = PaintingStyle.stroke

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// 固定维度模板（名称 + icon，不来自 AI）。
 class ResultDimensionTemplate {
   const ResultDimensionTemplate({
     required this.name,
@@ -14,13 +13,7 @@ class ResultDimensionTemplate {
 /// Result 页样式与固定 UI 文案。
 class ResultPageController {
   ResultPageController._();
-
-  // ---------------------------------------------------------------------------
-  // 固定 Tab / 区块标题（UI 标签，不来自 AI）
-  // ---------------------------------------------------------------------------
-
   static const List<String> tabLabels = ['Score', 'Insight', 'Tips'];
-
   static const String foodQualityScoreLabel = 'FOOD QUALITY SCORE';
   static const String outOf100Label = 'OUT OF 100';
   static const String scoreBreakdownTitle = 'SCORE BREAKDOWN';
@@ -33,7 +26,6 @@ class ResultPageController {
   static const String rememberPrefix = 'Remember:';
   static const String gotItLabel = 'Got it';
 
-  /// 四个维度名称与 icon 固定；分数与描述由 AI 填入。
   static const List<ResultDimensionTemplate> dimensionTemplates = [
     ResultDimensionTemplate(name: 'Meal Balance', emoji: '⚖️'),
     ResultDimensionTemplate(name: 'Food Variety', emoji: '🎨'),
@@ -47,7 +39,6 @@ class ResultPageController {
   static const String tipsDisclaimer =
       'These are general suggestions based on typical food quality principles. Every person\'s needs differ. FoodScore is not medical or dietary advice.';
 
-  // Score 页 — 分数说明 bottom sheet（固定文案）
   static const String scoreExplanationLinkLabel = 'What do these scores mean?';
   static const String scoreExplanationTitle = 'What do these scores mean?';
   static const String scoreExplanationSubtitle =
@@ -83,11 +74,6 @@ class ResultPageController {
   static const Color scoreExplanationSubtitleColor = Color(0xFF878984);
   static const Color scoreExplanationFooterColor = Color(0xFF959694);
   static const double scoreExplanationSheetHeightFactor = 0.8;
-
-  // ---------------------------------------------------------------------------
-  // 颜色
-  // ---------------------------------------------------------------------------
-
   static const Color backgroundColor = Color(0xFFF8FAF5);
   static const Color tabBarBg = Color(0xFFF2F2F2);
   static const Color tabActiveBg = Color(0xFF165529);
@@ -107,9 +93,6 @@ class ResultPageController {
   static const Color gotItBorder = Color(0xF2165529);
   static const Color gotItText = Color(0xF2165529);
 
-  // ---------------------------------------------------------------------------
-  // 尺寸
-  // ---------------------------------------------------------------------------
 
   static const double horizontalPadding = 27;
   static const double tabBarHeight = 33;
@@ -119,14 +102,11 @@ class ResultPageController {
   static const double insightCardRadius = 15;
   static const double insightCardTitleFontSize = 15;
 
-  /// SafeArea 之外额外下移，避免 Tab 贴顶；SafeArea 本身会避开刘海/状态栏。
   static const double topExtraPadding = 10;
 
-  /// Insight 页固定餐食 icon（与首页 meal_bowl 区分）。
   static const String insightMealImageAsset =
       'assets/images/insight_salad_bowl.png';
 
-  /// 1–5 橙色，6–10 绿色。
   static Color scoreColor(int score) {
     final clamped = score.clamp(1, 10);
     return clamped <= 5 ? scoreBarFair : scoreBarGood;
@@ -136,7 +116,7 @@ class ResultPageController {
     return dimensionTemplates[index];
   }
 
-  /// 固定维度完整定义（name + description），供 mock / GPT schema 对齐。
+  /// name + description
   static FoodScoreDimensionDefinition definitionAt(int index) {
     final template = dimensionTemplates[index];
     return FoodScoreDimensionDefinition(
@@ -154,7 +134,6 @@ class ResultPageController {
   ];
 }
 
-/// 分数说明 sheet 中的维度卡片文案。
 class ScoreExplanationDimension {
   const ScoreExplanationDimension({
     required this.title,
@@ -164,8 +143,6 @@ class ScoreExplanationDimension {
   final String title;
   final String explanation;
 }
-
-/// 固定维度定义（name + description + emoji）。
 class FoodScoreDimensionDefinition {
   const FoodScoreDimensionDefinition({
     required this.name,
